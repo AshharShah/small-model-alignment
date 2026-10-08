@@ -1,2 +1,10 @@
 __pycache__/
 *.py[cod]
+.venv/
+.venv/
+outputs/
+*.pt
+*.safetensors
+*.zip
+__pycache__/
+.ipynb_checkpoints/
