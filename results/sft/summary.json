@@ -1,0 +1,7 @@
+{
+  "best_val_loss": 1.3234732576626116,
+  "best_step": 937,
+  "final_val_loss": 1.3234732576626116,
+  "optimizer_steps": 937,
+  "train_minutes": 78.78820700645447
+}
