@@ -23,6 +23,7 @@ from alignment.batching import build_sft_batch
 from alignment.objectives import response_token_mask, sequence_logps_from_logits, sft_loss_from_logits
 from alignment.prompts import PROMPT_TEMPLATE, format_prompt
 
+os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
 
 def parse_args():
     ap = argparse.ArgumentParser()
@@ -42,7 +43,7 @@ def parse_args():
     ap.add_argument("--epochs", type=int, default=1)
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--eval_every", type=int, default=100, help="optimizer steps between validations")
-    ap.add_argument("--eval_batch_size", type=int, default=8)
+    ap.add_argument("--eval_batch_size", type=int, default=4)
     ap.add_argument("--log_every", type=int, default=10)
     ap.add_argument("--device", default="cuda:0")
     ap.add_argument("--grad_checkpointing", action="store_true", help="use if you hit out-of-memory")
@@ -96,6 +97,8 @@ def make_optimizer(model, args, use_cuda):
 @torch.no_grad()
 def evaluate(model, loader, device, use_amp):
     """Exact token-mean validation NLL over all response tokens."""
+    if device.type == "cuda":
+        torch.cuda.empty_cache()
     model.eval()
     nll, tokens = 0.0, 0
     for batch in loader:
@@ -107,6 +110,8 @@ def evaluate(model, loader, device, use_amp):
         nll += -sequence_logps_from_logits(logits, labels).sum().item()
         tokens += response_token_mask(labels).sum().item()
     model.train()
+    if device.type == "cuda":
+        torch.cuda.empty_cache()
     return nll / max(1, tokens), tokens
 
 
