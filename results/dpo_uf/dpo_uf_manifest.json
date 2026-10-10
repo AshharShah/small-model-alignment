@@ -1,0 +1,34 @@
+{
+  "dataset": "HuggingFaceH4/ultrafeedback_binarized",
+  "seed": 42,
+  "max_length": 512,
+  "max_prompt_length": 256,
+  "tokenizer": "Qwen/Qwen2.5-0.5B",
+  "train": {
+    "source_split": "train_prefs",
+    "sha256_16": "b269d97d0de0e864",
+    "n": 15000,
+    "mean_prompt_tokens": 75.8,
+    "mean_chosen_tokens": 171.5,
+    "mean_rejected_tokens": 148.7,
+    "frac_chosen_longer": 0.549,
+    "seen": 31014,
+    "skipped_too_long": 12124,
+    "skipped_tie_or_reversed_score": 3687,
+    "skipped_empty_or_identical": 203
+  },
+  "val": {
+    "source_split": "test_prefs",
+    "from_train_holdout": 27,
+    "sha256_16": "6b8d9be974da6256",
+    "n": 1000,
+    "mean_prompt_tokens": 74.0,
+    "mean_chosen_tokens": 166.8,
+    "mean_rejected_tokens": 143.6,
+    "frac_chosen_longer": 0.542,
+    "seen": 2065,
+    "skipped_too_long": 775,
+    "skipped_tie_or_reversed_score": 276,
+    "skipped_empty_or_identical": 14
+  }
+}

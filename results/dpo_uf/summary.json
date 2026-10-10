@@ -1,0 +1,10 @@
+{
+  "best_val_reward_acc": 0.706000030040741,
+  "best_val_loss_at_best": 0.5603647232055664,
+  "best_step": 468,
+  "final_val_reward_acc": 0.706000030040741,
+  "final_val_loss": 0.5603647232055664,
+  "final_val_reward_margin": 0.634911060333252,
+  "optimizer_steps": 468,
+  "train_minutes": 70.02354805072149
+}
