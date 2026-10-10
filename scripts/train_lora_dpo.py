@@ -10,6 +10,13 @@ release loads a model from a string.
 * reference: with a PEFT model TRL uses the same network with the adapter disabled (no second copy in memory)
 * outputs  : <run_dir>/adapter (LoRA weights), <run_dir>/metrics.json (config, log history, final evaluation)
 """
+import os
+
+# With several GPUs visible, the HF Trainer wraps the model in nn.DataParallel, which fails with this PEFT model
+# (parameters on cuda:0, replica on cuda:1) and would not help a 360M model anyway. Use a single GPU.
+# Must be set before torch initialises CUDA; export CUDA_VISIBLE_DEVICES yourself to override.
+os.environ.setdefault("CUDA_VISIBLE_DEVICES", "0")
+
 import argparse
 import json
 import random
