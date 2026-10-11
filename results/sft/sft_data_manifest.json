@@ -1,0 +1,27 @@
+{
+  "dataset": "HuggingFaceH4/ultrachat_200k",
+  "seed": 42,
+  "max_length": 512,
+  "tokenizer": "Qwen/Qwen2.5-0.5B",
+  "filter": "first user/assistant exchange; prompt+response+EOS <= max_length",
+  "train": {
+    "source_split": "train_sft",
+    "n": 30000,
+    "sha256_16": "ca0feddd00f00bd1",
+    "seen": 51565,
+    "skipped_format": 5,
+    "skipped_too_long": 21560,
+    "mean_prompt_tokens": 98.0,
+    "mean_response_tokens": 214.0
+  },
+  "val": {
+    "source_split": "test_sft",
+    "n": 1000,
+    "sha256_16": "f8e76b661fc62ea1",
+    "seen": 1785,
+    "skipped_format": 0,
+    "skipped_too_long": 785,
+    "mean_prompt_tokens": 99.2,
+    "mean_response_tokens": 213.4
+  }
+}
