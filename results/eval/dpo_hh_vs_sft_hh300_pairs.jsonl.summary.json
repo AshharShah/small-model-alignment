@@ -1,0 +1,14 @@
+{
+  "n_pairs": 300,
+  "model_under_test": "dpo_hh",
+  "reference_model": "sft",
+  "test_model_in_position_A": 150,
+  "test_model_in_position_B": 150,
+  "identical_outputs": 2,
+  "pairs_with_any_truncated_response": 61,
+  "empty_responses": 0,
+  "responses_mentioning_identity_words": 8,
+  "seed": 42,
+  "test_path": "outputs/generations/dpo_hh_qwen2.5-0.5b_hh300.json",
+  "ref_path": "outputs/generations/sft_qwen2.5-0.5b_hh300.json"
+}
