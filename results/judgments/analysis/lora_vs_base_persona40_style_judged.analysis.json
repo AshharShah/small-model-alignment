@@ -1,0 +1,197 @@
+{
+  "overall": {
+    "n": 40,
+    "wins": 0,
+    "ties": 40,
+    "losses": 0,
+    "unknown": 0,
+    "win_rate_excl_ties": null,
+    "wilson95_excl_ties": [
+      null,
+      null
+    ],
+    "win_rate_ties_half": 0.5,
+    "sign_test_p": null
+  },
+  "judge_position_picks (as shown)": {
+    "A": 0,
+    "B": 0,
+    "TIE": 40
+  },
+  "by_category": {
+    "coding": {
+      "n": 10,
+      "wins": 0,
+      "ties": 10,
+      "losses": 0,
+      "unknown": 0,
+      "win_rate_excl_ties": null,
+      "wilson95_excl_ties": [
+        null,
+        null
+      ],
+      "win_rate_ties_half": 0.5,
+      "sign_test_p": null
+    },
+    "cooking": {
+      "n": 10,
+      "wins": 0,
+      "ties": 10,
+      "losses": 0,
+      "unknown": 0,
+      "win_rate_excl_ties": null,
+      "wilson95_excl_ties": [
+        null,
+        null
+      ],
+      "win_rate_ties_half": 0.5,
+      "sign_test_p": null
+    },
+    "general_help": {
+      "n": 10,
+      "wins": 0,
+      "ties": 10,
+      "losses": 0,
+      "unknown": 0,
+      "win_rate_excl_ties": null,
+      "wilson95_excl_ties": [
+        null,
+        null
+      ],
+      "win_rate_ties_half": 0.5,
+      "sign_test_p": null
+    },
+    "safety_sensitive": {
+      "n": 10,
+      "wins": 0,
+      "ties": 10,
+      "losses": 0,
+      "unknown": 0,
+      "win_rate_excl_ties": null,
+      "wilson95_excl_ties": [
+        null,
+        null
+      ],
+      "win_rate_ties_half": 0.5,
+      "sign_test_p": null
+    }
+  },
+  "by_length": {
+    "similar_length": {
+      "n": 22,
+      "wins": 0,
+      "ties": 22,
+      "losses": 0,
+      "unknown": 0,
+      "win_rate_excl_ties": null,
+      "wilson95_excl_ties": [
+        null,
+        null
+      ],
+      "win_rate_ties_half": 0.5,
+      "sign_test_p": null
+    },
+    "test_longer(>1.2x)": {
+      "n": 6,
+      "wins": 0,
+      "ties": 6,
+      "losses": 0,
+      "unknown": 0,
+      "win_rate_excl_ties": null,
+      "wilson95_excl_ties": [
+        null,
+        null
+      ],
+      "win_rate_ties_half": 0.5,
+      "sign_test_p": null
+    },
+    "test_shorter(<0.8x)": {
+      "n": 12,
+      "wins": 0,
+      "ties": 12,
+      "losses": 0,
+      "unknown": 0,
+      "win_rate_excl_ties": null,
+      "wilson95_excl_ties": [
+        null,
+        null
+      ],
+      "win_rate_ties_half": 0.5,
+      "sign_test_p": null
+    }
+  },
+  "by_truncation": {
+    "any_truncated": {
+      "n": 3,
+      "wins": 0,
+      "ties": 3,
+      "losses": 0,
+      "unknown": 0,
+      "win_rate_excl_ties": null,
+      "wilson95_excl_ties": [
+        null,
+        null
+      ],
+      "win_rate_ties_half": 0.5,
+      "sign_test_p": null
+    },
+    "none_truncated": {
+      "n": 37,
+      "wins": 0,
+      "ties": 37,
+      "losses": 0,
+      "unknown": 0,
+      "win_rate_excl_ties": null,
+      "wilson95_excl_ties": [
+        null,
+        null
+      ],
+      "win_rate_ties_half": 0.5,
+      "sign_test_p": null
+    }
+  },
+  "by_test_position": {
+    "test_in_A": {
+      "n": 20,
+      "wins": 0,
+      "ties": 20,
+      "losses": 0,
+      "unknown": 0,
+      "win_rate_excl_ties": null,
+      "wilson95_excl_ties": [
+        null,
+        null
+      ],
+      "win_rate_ties_half": 0.5,
+      "sign_test_p": null
+    },
+    "test_in_B": {
+      "n": 20,
+      "wins": 0,
+      "ties": 20,
+      "losses": 0,
+      "unknown": 0,
+      "win_rate_excl_ties": null,
+      "wilson95_excl_ties": [
+        null,
+        null
+      ],
+      "win_rate_ties_half": 0.5,
+      "sign_test_p": null
+    }
+  },
+  "excluding_identical_auto_ties": {
+    "n": 38,
+    "wins": 0,
+    "ties": 38,
+    "losses": 0,
+    "unknown": 0,
+    "win_rate_excl_ties": null,
+    "wilson95_excl_ties": [
+      null,
+      null
+    ],
+    "win_rate_ties_half": 0.5,
+    "sign_test_p": null
+  }
+}

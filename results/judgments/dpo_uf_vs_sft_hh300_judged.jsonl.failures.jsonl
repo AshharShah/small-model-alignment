@@ -1,0 +1,1 @@
+{"batch_index": 12, "pair_ids": ["ufx-0055", "ufx-0056", "ufx-0057", "ufx-0058", "ufx-0059"], "attempts": 3, "errors": ["attempt 1: 5 of 5 verdicts missing/invalid", "attempt 2: 5 of 5 verdicts missing/invalid", "attempt 3: 5 of 5 verdicts missing/invalid"], "last_raw_response": "", "timestamp": "2026-10-11T19:34:13+00:00"}
