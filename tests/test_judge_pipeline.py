@@ -102,7 +102,7 @@ def test_batches_of_five_with_sleep_between_calls_and_isolated_prompts(tmp_path)
     judge = scripted()
     stats, sleeps, out, fail = run(pairs, judge, tmp_path, batch_size=5, sleep_seconds=5.0, max_retries=3, reuse=False)
     assert [p.count("### Comparison") for p in judge.prompts] == [5, 5, 2]
-    assert stats == {"batches_run": 3, "failed_batches": 0, "judge_calls": 3}
+    assert (stats["batches_run"], stats["failed_batches"], stats["judge_calls"]) == (3, 0, 3)
     assert sleeps == [5.0, 5.0]                                  # a pause before every call except the first
     assert all("SECRETNAME" not in p for p in judge.prompts)
     recs = jp.read_jsonl(out)
@@ -147,7 +147,8 @@ def test_exhausted_retries_log_failure_mark_unknown_and_resume_retries_only_thos
         if set(ids) & bad_ids:
             return "I cannot comply with that"
         return scripted()(prompt)
-    stats, _, out, fail = run(pairs, judge, tmp_path, batch_size=5, sleep_seconds=0.0, max_retries=3, reuse=False)
+    stats, _, out, fail = run(pairs, judge, tmp_path, batch_size=5, sleep_seconds=0.0, max_retries=3, reuse=False,
+                              split_failed=False)
     assert stats["failed_batches"] == 1 and stats["judge_calls"] == 4              # 1 good call + 3 failed attempts
     failures = jp.read_jsonl(fail)
     assert len(failures) == 1 and set(failures[0]["pair_ids"]) == bad_ids and failures[0]["attempts"] == 3
@@ -159,6 +160,55 @@ def test_exhausted_retries_log_failure_mark_unknown_and_resume_retries_only_thos
     assert stats2["judge_calls"] == 1 and len(judge2.prompts) == 1 and judge2.prompts[0].count("### Comparison") == 5
     final = jp.summarize(out2, pairs, stats2)
     assert final["unknown"] == 0 and final["missing_no_record"] == 0 and final["test_win"] + final["ref_win"] == 10
+
+
+def poisoned_judge(poison_ids):
+    """Fails (no JSON) whenever a prompt contains a poison pair, answers normally otherwise."""
+    inner = scripted()
+
+    def judge(prompt):
+        if set(re.findall(r"pair_id=(\S+)", prompt)) & poison_ids:
+            return "I cannot comply with that"
+        return inner(prompt)
+    judge.prompts = inner.prompts
+    return judge
+
+
+def test_failed_batch_is_split_so_one_poison_pair_does_not_sink_its_neighbours(tmp_path):
+    pairs = make_pairs(10)
+    poison = {pairs[7]["pair_id"]}
+    judge = poisoned_judge(poison)
+    stats, _, out, fail = run(pairs, judge, tmp_path, batch_size=5, sleep_seconds=0.0, max_retries=3, reuse=False)
+    assert stats["batches_split_after_failure"] == 1 and stats["failed_batches"] == 1
+    summary = jp.summarize(out, pairs, stats)
+    assert summary["unknown"] == 1 and summary["test_win"] + summary["ref_win"] == 9      # only the poison pair is lost
+    failures = jp.read_jsonl(fail)
+    assert len(failures) == 1 and failures[0]["pair_ids"] == list(poison)                  # failure log names the culprit alone
+    assert any("individually" in e for e in failures[0]["errors"])
+    singles = [p for p in judge.prompts if p.count("### Comparison") == 1]
+    assert len(singles) == 4 and all(not (set(re.findall(r"pair_id=(\S+)", p)) & poison) for p in singles)
+
+
+def test_split_does_nothing_when_the_batch_succeeds_or_when_disabled(tmp_path):
+    stats, _, _, fail = run(make_pairs(10), scripted(), tmp_path, batch_size=5, sleep_seconds=0.0, max_retries=3, reuse=False)
+    assert stats["batches_split_after_failure"] == 0 and not fail.exists()
+
+    pairs, sub = make_pairs(5), tmp_path / "off"
+    sub.mkdir()
+    stats, _, out, fail = run(pairs, poisoned_judge({pairs[2]["pair_id"]}), sub, batch_size=5, sleep_seconds=0.0,
+                              max_retries=3, reuse=False, split_failed=False)
+    assert stats["batches_split_after_failure"] == 0 and stats["judge_calls"] == 3
+    assert jp.summarize(out, pairs, stats)["unknown"] == 5 and set(jp.read_jsonl(fail)[0]["pair_ids"]) == {p["pair_id"] for p in pairs}
+
+
+def test_rerun_after_split_retries_only_the_unresolved_pair(tmp_path):
+    pairs = make_pairs(5)
+    bad = pairs[1]["pair_id"]
+    stats, _, out, _ = run(pairs, poisoned_judge({bad}), tmp_path, batch_size=5, sleep_seconds=0.0, max_retries=2, reuse=False)
+    judge2 = scripted()
+    stats2, _, out2, _ = run(pairs, judge2, tmp_path, batch_size=5, sleep_seconds=0.0, max_retries=2, reuse=True)
+    assert len(judge2.prompts) == 1 and re.findall(r"pair_id=(\S+)", judge2.prompts[0]) == [bad]
+    assert jp.summarize(out2, pairs, stats2)["unknown"] == 0
 
 
 def test_rerun_with_everything_judged_makes_no_calls(tmp_path):

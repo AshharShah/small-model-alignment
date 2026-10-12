@@ -173,7 +173,8 @@ def completed_ids(out_path):
 
 # ------------------------------------------------------------------ the batch job
 def run_judging(pairs, judge_fn, out_path, fail_path, rubric, batch_size=5, sleep_seconds=5.0, max_retries=3,
-                reuse=True, swap=False, judge_identical=False, info=None, sleep_fn=time.sleep, log=print):
+                reuse=True, swap=False, judge_identical=False, info=None, sleep_fn=time.sleep, log=print,
+                split_failed=True):
     info = dict(info or {})
     out = Path(out_path)
     if out.exists() and out.stat().st_size and not reuse:
@@ -190,15 +191,16 @@ def run_judging(pairs, judge_fn, out_path, fail_path, rubric, batch_size=5, slee
     todo = [r for r in pairs if r["pair_id"] not in done and r["pair_id"] not in auto_ids]
     log(f"{len(pairs)} pairs | already judged: {len(done)} | auto-tie identical: {len(auto)} | to judge: {len(todo)}")
 
-    n_batches, failed_batches, calls = 0, 0, 0
-    for b0 in range(0, len(todo), batch_size):
-        batch, n_batches = todo[b0:b0 + batch_size], n_batches + 1
-        pending, errors, last_raw, attempts = list(batch), [], "", 0
+    state = {"calls": 0}
+
+    def attempt(rows, batch_index):
+        """Up to max_retries requests for `rows`; verdicts are written as soon as they arrive."""
+        pending, errors, last_raw, attempts = list(rows), [], "", 0
         while pending and attempts < max_retries:
             attempts += 1
-            if calls:
+            if state["calls"]:
                 sleep_fn(sleep_seconds)          # >= sleep_seconds between request attempts
-            calls += 1
+            state["calls"] += 1
             try:
                 last_raw = judge_fn(build_prompt(pending, rubric, swap))
             except Exception as e:                # rate limits, denials, network: back off and retry
@@ -208,11 +210,29 @@ def run_judging(pairs, judge_fn, out_path, fail_path, rubric, batch_size=5, slee
             got = parse_verdicts(last_raw, {r["pair_id"] for r in pending})
             if got:
                 append_jsonl(out, [make_record(r, rubric, swap, got[r["pair_id"]][0], got[r["pair_id"]][1],
-                                               {**info, "auto": None, "batch_index": n_batches, "attempts": attempts})
+                                               {**info, "auto": None, "batch_index": batch_index, "attempts": attempts})
                                    for r in pending if r["pair_id"] in got])
             if len(got) < len(pending):
                 errors.append(f"attempt {attempts}: {len(pending) - len(got)} of {len(pending)} verdicts missing/invalid")
             pending = [r for r in pending if r["pair_id"] not in got]
+        return pending, errors, last_raw, attempts
+
+    n_batches, failed_batches, split_batches = 0, 0, 0
+    for b0 in range(0, len(todo), batch_size):
+        batch, n_batches = todo[b0:b0 + batch_size], n_batches + 1
+        pending, errors, last_raw, attempts = attempt(batch, n_batches)
+        if pending and split_failed and len(pending) > 1:
+            # a whole batch keeps failing: one bad pair (e.g. content the judge will not process) can poison it,
+            # so judge the remaining pairs one at a time to isolate it
+            split_batches += 1
+            errors.append(f"batch failed {attempts} attempts; judging the {len(pending)} remaining pairs individually")
+            for r in list(pending):
+                _, e2, raw2, a2 = attempt([r], n_batches)
+                errors += e2
+                attempts += a2
+                last_raw = raw2 or last_raw
+            valid = {x["pair_id"] for x in jsonl_valid(out)}
+            pending = [r for r in batch if r["pair_id"] not in valid]       # whatever is still unresolved
         if pending:                              # exhausted retries: record UNKNOWN and log the failure
             failed_batches += 1
             append_jsonl(out, [make_record(r, rubric, swap, "UNKNOWN", "", {**info, "auto": None, "batch_index": n_batches,
@@ -222,7 +242,13 @@ def run_judging(pairs, judge_fn, out_path, fail_path, rubric, batch_size=5, slee
                                       "timestamp": datetime.now(timezone.utc).isoformat(timespec="seconds")}])
         log(f"batch {n_batches}: {len(batch) - len(pending)}/{len(batch)} judged in {attempts} attempt(s)"
             + (" | FAILED: logged" if pending else ""))
-    return {"batches_run": n_batches, "failed_batches": failed_batches, "judge_calls": calls}
+    return {"batches_run": n_batches, "failed_batches": failed_batches, "judge_calls": state["calls"],
+            "batches_split_after_failure": split_batches}
+
+
+def jsonl_valid(path):
+    """Records with a valid verdict currently in the output file."""
+    return [r for r in read_jsonl(path) if r["outcome"] != "unknown"]
 
 
 # ------------------------------------------------------------------ summary
@@ -294,6 +320,7 @@ def main():
     ap.add_argument("--reuse_judgments", action="store_true")
     ap.add_argument("--swap", action="store_true", help="show the responses in swapped positions (position-bias check)")
     ap.add_argument("--judge_identical", action="store_true", help="send identical-response pairs to the judge too")
+    ap.add_argument("--no_split_failed", action="store_true", help="do not re-judge the pairs of a failed batch one at a time")
     ap.add_argument("--limit", type=int, default=None)
     ap.add_argument("--failures_path", default=None)
     args = ap.parse_args()
@@ -310,7 +337,8 @@ def main():
     print(f"judge requested: {args.judge_model} | used: {used} | rubric: {args.rubric} | swap: {args.swap}")
 
     stats = run_judging(pairs, judge, args.output_path, fail_path, args.rubric, args.batch_size, args.sleep_seconds,
-                        args.max_retries, args.reuse_judgments, args.swap, args.judge_identical, info)
+                        args.max_retries, args.reuse_judgments, args.swap, args.judge_identical, info,
+                        split_failed=not args.no_split_failed)
     summary = summarize(args.output_path, pairs, stats)
     summary.update({"rubric": args.rubric, "swap": args.swap, "judge_model_requested": args.judge_model,
                     "judge_model_used": used, "batch_size": args.batch_size, "sleep_seconds": args.sleep_seconds,
