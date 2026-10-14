@@ -1,0 +1,14 @@
+{
+  "n_pairs": 22,
+  "model_under_test": "lora_r16_lr5e-5",
+  "reference_model": "smollm2_base",
+  "test_model_in_position_A": 11,
+  "test_model_in_position_B": 11,
+  "identical_outputs": 0,
+  "pairs_with_any_truncated_response": 3,
+  "empty_responses": 0,
+  "responses_mentioning_identity_words": 0,
+  "seed": 42,
+  "test_path": "outputs/generations/persona_heldout_r16_lr5e-5.json",
+  "ref_path": "outputs/generations/persona_heldout_base.json"
+}

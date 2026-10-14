@@ -1,0 +1,14 @@
+{
+  "n_pairs": 40,
+  "model_under_test": "lora_r16_lr1e-4_rpo1",
+  "reference_model": "smollm2_base",
+  "test_model_in_position_A": 20,
+  "test_model_in_position_B": 20,
+  "identical_outputs": 0,
+  "pairs_with_any_truncated_response": 13,
+  "empty_responses": 0,
+  "responses_mentioning_identity_words": 0,
+  "seed": 42,
+  "test_path": "outputs/generations/persona_r16_lr1e-4_rpo1.json",
+  "ref_path": "results/generations/persona_base.json"
+}

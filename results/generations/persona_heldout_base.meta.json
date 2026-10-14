@@ -1,0 +1,17 @@
+{
+  "generator": "smollm2-360m-instruct-base",
+  "model_name": "HuggingFaceTB/SmolLM2-360M-Instruct",
+  "adapter_path": null,
+  "prompts_path": "eval_sets/persona_heldout_prompts.json",
+  "num_prompts": 22,
+  "chat_template": true,
+  "dtype": "float16",
+  "batch_size": 8,
+  "decoding": {
+    "do_sample": false,
+    "max_new_tokens": 512,
+    "repetition_penalty": 1.0
+  },
+  "torch": "2.11.0+cu128",
+  "transformers": "4.57.6"
+}
