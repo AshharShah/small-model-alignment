@@ -1,107 +1,107 @@
 {
   "overall": {
     "n": 300,
-    "wins": 102,
-    "ties": 62,
-    "losses": 131,
-    "unknown": 5,
-    "win_rate_excl_ties": 0.4378,
+    "wins": 96,
+    "ties": 68,
+    "losses": 134,
+    "unknown": 2,
+    "win_rate_excl_ties": 0.4174,
     "wilson95_excl_ties": [
-      0.3756,
-      0.502
+      0.3555,
+      0.482
     ],
-    "win_rate_ties_half": 0.4508,
-    "sign_test_p": 0.0664
+    "win_rate_ties_half": 0.4362,
+    "sign_test_p": 0.0145
   },
   "judge_position_picks (as shown)": {
-    "A": 138,
-    "B": 95,
-    "TIE": 62
+    "A": 134,
+    "B": 96,
+    "TIE": 68
   },
   "by_category": {
     "benign_helpfulness": {
       "n": 30,
-      "wins": 11,
-      "ties": 0,
-      "losses": 18,
-      "unknown": 1,
-      "win_rate_excl_ties": 0.3793,
+      "wins": 15,
+      "ties": 1,
+      "losses": 14,
+      "unknown": 0,
+      "win_rate_excl_ties": 0.5172,
       "wilson95_excl_ties": [
-        0.2269,
-        0.56
+        0.3443,
+        0.6861
       ],
-      "win_rate_ties_half": 0.3793,
-      "sign_test_p": 0.2649
+      "win_rate_ties_half": 0.5167,
+      "sign_test_p": 1.0
     },
     "calibration_and_uncertainty": {
       "n": 30,
-      "wins": 6,
-      "ties": 1,
-      "losses": 23,
+      "wins": 5,
+      "ties": 6,
+      "losses": 19,
       "unknown": 0,
-      "win_rate_excl_ties": 0.2069,
+      "win_rate_excl_ties": 0.2083,
       "wilson95_excl_ties": [
-        0.0985,
-        0.3839
+        0.0924,
+        0.4047
       ],
-      "win_rate_ties_half": 0.2167,
-      "sign_test_p": 0.0023
+      "win_rate_ties_half": 0.2667,
+      "sign_test_p": 0.0066
     },
     "cyber_abuse": {
       "n": 30,
-      "wins": 15,
-      "ties": 4,
-      "losses": 11,
+      "wins": 13,
+      "ties": 10,
+      "losses": 7,
       "unknown": 0,
-      "win_rate_excl_ties": 0.5769,
+      "win_rate_excl_ties": 0.65,
       "wilson95_excl_ties": [
-        0.3895,
-        0.7446
+        0.4329,
+        0.8188
       ],
-      "win_rate_ties_half": 0.5667,
-      "sign_test_p": 0.5572
+      "win_rate_ties_half": 0.6,
+      "sign_test_p": 0.2632
     },
     "harmful_instructions": {
       "n": 30,
-      "wins": 6,
-      "ties": 18,
-      "losses": 5,
-      "unknown": 1,
-      "win_rate_excl_ties": 0.5455,
+      "wins": 4,
+      "ties": 14,
+      "losses": 12,
+      "unknown": 0,
+      "win_rate_excl_ties": 0.25,
       "wilson95_excl_ties": [
-        0.2801,
-        0.7873
+        0.1018,
+        0.495
       ],
-      "win_rate_ties_half": 0.5172,
-      "sign_test_p": 1.0
+      "win_rate_ties_half": 0.3667,
+      "sign_test_p": 0.0768
     },
     "hate_or_harassment": {
       "n": 30,
-      "wins": 8,
-      "ties": 16,
+      "wins": 5,
+      "ties": 19,
       "losses": 5,
       "unknown": 1,
-      "win_rate_excl_ties": 0.6154,
+      "win_rate_excl_ties": 0.5,
       "wilson95_excl_ties": [
-        0.3552,
-        0.8229
+        0.2366,
+        0.7634
       ],
-      "win_rate_ties_half": 0.5517,
-      "sign_test_p": 0.5811
+      "win_rate_ties_half": 0.5,
+      "sign_test_p": 1.0
     },
     "legal_financial_safety": {
       "n": 30,
-      "wins": 5,
-      "ties": 8,
-      "losses": 17,
+      "wins": 7,
+      "ties": 5,
+      "losses": 18,
       "unknown": 0,
-      "win_rate_excl_ties": 0.2273,
+      "win_rate_excl_ties": 0.28,
       "wilson95_excl_ties": [
-        0.1012,
-        0.4344
+        0.1428,
+        0.4758
       ],
-      "win_rate_ties_half": 0.3,
-      "sign_test_p": 0.0169
+      "win_rate_ties_half": 0.3167,
+      "sign_test_p": 0.0433
     },
     "medical_safety": {
       "n": 30,
@@ -119,163 +119,163 @@
     },
     "privacy_and_doxxing": {
       "n": 30,
-      "wins": 6,
-      "ties": 9,
-      "losses": 14,
-      "unknown": 1,
-      "win_rate_excl_ties": 0.3,
+      "wins": 8,
+      "ties": 6,
+      "losses": 16,
+      "unknown": 0,
+      "win_rate_excl_ties": 0.3333,
       "wilson95_excl_ties": [
-        0.1455,
-        0.519
+        0.1797,
+        0.5329
       ],
-      "win_rate_ties_half": 0.3621,
-      "sign_test_p": 0.1153
+      "win_rate_ties_half": 0.3667,
+      "sign_test_p": 0.1516
     },
     "safe_transformation": {
       "n": 30,
-      "wins": 22,
+      "wins": 19,
       "ties": 2,
-      "losses": 6,
-      "unknown": 0,
-      "win_rate_excl_ties": 0.7857,
+      "losses": 8,
+      "unknown": 1,
+      "win_rate_excl_ties": 0.7037,
       "wilson95_excl_ties": [
-        0.6046,
-        0.8979
+        0.5152,
+        0.8415
       ],
-      "win_rate_ties_half": 0.7667,
-      "sign_test_p": 0.0037
+      "win_rate_ties_half": 0.6897,
+      "sign_test_p": 0.0522
     },
     "self_harm_support": {
       "n": 30,
-      "wins": 13,
-      "ties": 2,
-      "losses": 14,
-      "unknown": 1,
-      "win_rate_excl_ties": 0.4815,
+      "wins": 10,
+      "ties": 3,
+      "losses": 17,
+      "unknown": 0,
+      "win_rate_excl_ties": 0.3704,
       "wilson95_excl_ties": [
-        0.3074,
-        0.6601
+        0.2153,
+        0.5577
       ],
-      "win_rate_ties_half": 0.4828,
-      "sign_test_p": 1.0
+      "win_rate_ties_half": 0.3833,
+      "sign_test_p": 0.2478
     }
   },
   "by_length": {
     "similar_length": {
       "n": 97,
-      "wins": 34,
-      "ties": 33,
-      "losses": 27,
-      "unknown": 3,
-      "win_rate_excl_ties": 0.5574,
+      "wins": 28,
+      "ties": 37,
+      "losses": 31,
+      "unknown": 1,
+      "win_rate_excl_ties": 0.4746,
       "wilson95_excl_ties": [
-        0.433,
-        0.6749
+        0.3527,
+        0.5996
       ],
-      "win_rate_ties_half": 0.5372,
-      "sign_test_p": 0.4426
+      "win_rate_ties_half": 0.4844,
+      "sign_test_p": 0.7948
     },
     "test_longer(>1.2x)": {
       "n": 185,
-      "wins": 57,
-      "ties": 28,
+      "wins": 55,
+      "ties": 30,
       "losses": 100,
       "unknown": 0,
-      "win_rate_excl_ties": 0.3631,
+      "win_rate_excl_ties": 0.3548,
       "wilson95_excl_ties": [
-        0.2919,
-        0.4407
+        0.2839,
+        0.4328
       ],
-      "win_rate_ties_half": 0.3838,
-      "sign_test_p": 0.0007
+      "win_rate_ties_half": 0.3784,
+      "sign_test_p": 0.0004
     },
     "test_shorter(<0.8x)": {
       "n": 18,
-      "wins": 11,
+      "wins": 13,
       "ties": 1,
-      "losses": 4,
-      "unknown": 2,
-      "win_rate_excl_ties": 0.7333,
+      "losses": 3,
+      "unknown": 1,
+      "win_rate_excl_ties": 0.8125,
       "wilson95_excl_ties": [
-        0.4805,
-        0.891
+        0.5699,
+        0.9341
       ],
-      "win_rate_ties_half": 0.7188,
-      "sign_test_p": 0.1185
+      "win_rate_ties_half": 0.7941,
+      "sign_test_p": 0.0213
     }
   },
   "by_truncation": {
     "any_truncated": {
       "n": 93,
-      "wins": 24,
+      "wins": 20,
       "ties": 38,
-      "losses": 28,
-      "unknown": 3,
-      "win_rate_excl_ties": 0.4615,
+      "losses": 33,
+      "unknown": 2,
+      "win_rate_excl_ties": 0.3774,
       "wilson95_excl_ties": [
-        0.3334,
-        0.595
+        0.2594,
+        0.5119
       ],
-      "win_rate_ties_half": 0.4778,
-      "sign_test_p": 0.6778
+      "win_rate_ties_half": 0.4286,
+      "sign_test_p": 0.0984
     },
     "none_truncated": {
       "n": 207,
-      "wins": 78,
-      "ties": 24,
-      "losses": 103,
-      "unknown": 2,
-      "win_rate_excl_ties": 0.4309,
+      "wins": 76,
+      "ties": 30,
+      "losses": 101,
+      "unknown": 0,
+      "win_rate_excl_ties": 0.4294,
       "wilson95_excl_ties": [
-        0.361,
-        0.5038
+        0.3587,
+        0.503
       ],
-      "win_rate_ties_half": 0.439,
-      "sign_test_p": 0.0741
+      "win_rate_ties_half": 0.4396,
+      "sign_test_p": 0.0709
     }
   },
   "by_test_position": {
     "test_in_A": {
       "n": 150,
-      "wins": 61,
-      "ties": 33,
-      "losses": 54,
+      "wins": 56,
+      "ties": 36,
+      "losses": 56,
       "unknown": 2,
-      "win_rate_excl_ties": 0.5304,
+      "win_rate_excl_ties": 0.5,
       "wilson95_excl_ties": [
-        0.4397,
-        0.6192
+        0.4089,
+        0.5911
       ],
-      "win_rate_ties_half": 0.5236,
-      "sign_test_p": 0.576
+      "win_rate_ties_half": 0.5,
+      "sign_test_p": 1.0
     },
     "test_in_B": {
       "n": 150,
-      "wins": 41,
-      "ties": 29,
-      "losses": 77,
-      "unknown": 3,
-      "win_rate_excl_ties": 0.3475,
+      "wins": 40,
+      "ties": 32,
+      "losses": 78,
+      "unknown": 0,
+      "win_rate_excl_ties": 0.339,
       "wilson95_excl_ties": [
-        0.2676,
-        0.437
+        0.2599,
+        0.4283
       ],
-      "win_rate_ties_half": 0.3776,
-      "sign_test_p": 0.0012
+      "win_rate_ties_half": 0.3733,
+      "sign_test_p": 0.0006
     }
   },
   "excluding_identical_auto_ties": {
     "n": 300,
-    "wins": 102,
-    "ties": 62,
-    "losses": 131,
-    "unknown": 5,
-    "win_rate_excl_ties": 0.4378,
+    "wins": 96,
+    "ties": 68,
+    "losses": 134,
+    "unknown": 2,
+    "win_rate_excl_ties": 0.4174,
     "wilson95_excl_ties": [
-      0.3756,
-      0.502
+      0.3555,
+      0.482
     ],
-    "win_rate_ties_half": 0.4508,
-    "sign_test_p": 0.0664
+    "win_rate_ties_half": 0.4362,
+    "sign_test_p": 0.0145
   }
 }

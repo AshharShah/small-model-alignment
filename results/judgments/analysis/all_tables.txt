@@ -1,0 +1,380 @@
+====================================================================================================
+control_lr1e-4_vs_base_persona40_style_judged | test=lora_r16_lr1e-4 vs ref=smollm2_base | rubric=persona_style | swap=False | judge=google/gemini-3.6-flash
+
+OVERALL
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  overall                      40    2   38     0    0          1.000     [0.3424, 1.0]   0.500
+  excluding identical auto-ties   40    2   38     0    0          1.000     [0.3424, 1.0]   0.500
+
+judge position picks (as shown): {'A': 1, 'B': 1, 'TIE': 38}
+
+BY_TEST_POSITION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  test_in_A                    20    1   19     0    0          1.000     [0.2065, 1.0]   1.000
+  test_in_B                    20    1   19     0    0          1.000     [0.2065, 1.0]   1.000
+
+BY_LENGTH
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  similar_length               10    0   10     0    0              -                 -       -
+  test_longer(>1.2x)           20    1   19     0    0          1.000     [0.2065, 1.0]   1.000
+  test_shorter(<0.8x)          10    1    9     0    0          1.000     [0.2065, 1.0]   1.000
+
+BY_TRUNCATION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  any_truncated                12    0   12     0    0              -                 -       -
+  none_truncated               28    2   26     0    0          1.000     [0.3424, 1.0]   0.500
+
+BY_CATEGORY
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  coding                       10    0   10     0    0              -                 -       -
+  cooking                      10    1    9     0    0          1.000     [0.2065, 1.0]   1.000
+  general_help                 10    0   10     0    0              -                 -       -
+  safety_sensitive             10    1    9     0    0          1.000     [0.2065, 1.0]   1.000
+====================================================================================================
+dpo_hh_vs_sft_alpaca300_judged | test=dpo_hh vs ref=sft | rubric=general | swap=False | judge=google/gemini-3.6-flash
+
+OVERALL
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  overall                     300  102   93   105    0          0.493  [0.4254, 0.5604]   0.889
+  excluding identical auto-ties  270  102   63   105    0          0.493  [0.4254, 0.5604]   0.889
+
+judge position picks (as shown): {'A': 110, 'B': 97, 'TIE': 93}
+
+BY_TEST_POSITION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  test_in_A                   150   54   47    49    0          0.524  [0.4287, 0.6181]   0.694
+  test_in_B                   150   48   46    56    0          0.462   [0.3688, 0.557]   0.493
+
+BY_LENGTH
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  similar_length              167   45   76    46    0          0.494  [0.3941, 0.5954]   1.000
+  test_longer(>1.2x)           51   14    8    29    0          0.326  [0.2049, 0.4748]   0.032
+  test_shorter(<0.8x)          82   43    9    30    0          0.589  [0.4745, 0.6947]   0.160
+
+BY_TRUNCATION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  any_truncated                59   21   20    18    0          0.538  [0.3857, 0.6843]   0.749
+  none_truncated              241   81   73    87    0          0.482  [0.4078, 0.5573]   0.700
+====================================================================================================
+dpo_hh_vs_sft_hh300_judged | test=dpo_hh vs ref=sft | rubric=safety | swap=False | judge=google/gemini-3.6-flash
+
+OVERALL
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  overall                     300  137   70    93    0          0.596   [0.5312, 0.657]   0.004
+  excluding identical auto-ties  298  137   68    93    0          0.596   [0.5312, 0.657]   0.004
+
+judge position picks (as shown): {'A': 125, 'B': 105, 'TIE': 70}
+
+BY_TEST_POSITION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  test_in_A                   150   72   38    40    0          0.643  [0.5507, 0.7255]   0.003
+  test_in_B                   150   65   32    53    0          0.551  [0.4609, 0.6376]   0.311
+
+BY_LENGTH
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  similar_length              115   41   41    33    0          0.554  [0.4409, 0.6618]   0.416
+  test_longer(>1.2x)           52   17    5    30    0          0.362  [0.2397, 0.5046]   0.079
+  test_shorter(<0.8x)         133   79   24    30    0          0.725  [0.6344, 0.7999]   0.000
+
+BY_TRUNCATION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  any_truncated                61   28   13    20    0          0.583  [0.4428, 0.7115]   0.312
+  none_truncated              239  109   57    73    0          0.599  [0.5264, 0.6674]   0.009
+
+BY_CATEGORY
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  benign_helpfulness           30   16    0    14    0          0.533  [0.3614, 0.6977]   0.856
+  calibration_and_uncertainty   30   16    8     6    0          0.727  [0.5185, 0.8685]   0.052
+  cyber_abuse                  30   13   11     6    0          0.684  [0.4601, 0.8464]   0.167
+  harmful_instructions         30   15    6     9    0          0.625  [0.4271, 0.7884]   0.307
+  hate_or_harassment           30   13   14     3    0          0.812  [0.5699, 0.9341]   0.021
+  legal_financial_safety       30   15    3    12    0          0.556  [0.3731, 0.7241]   0.701
+  medical_safety               30   13    6    11    0          0.542  [0.3507, 0.7211]   0.839
+  privacy_and_doxxing          30    9   13     8    0          0.529  [0.3096, 0.7384]   1.000
+  safe_transformation          30   13    9     8    0          0.619  [0.4088, 0.7925]   0.383
+  self_harm_support            30   14    0    16    0          0.467  [0.3023, 0.6386]   0.856
+====================================================================================================
+dpo_hh_vs_sft_hh300_plainrubric_judged | test=dpo_hh vs ref=sft | rubric=safety_plain | swap=False | judge=google/gemini-3.6-flash
+
+OVERALL
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  overall                     300  134   68    97    1          0.580  [0.5156, 0.6419]   0.018
+  excluding identical auto-ties  298  134   66    97    1          0.580  [0.5156, 0.6419]   0.018
+
+judge position picks (as shown): {'A': 122, 'B': 109, 'TIE': 68}
+
+BY_TEST_POSITION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  test_in_A                   150   68   38    43    1          0.613   [0.5197, 0.698]   0.022
+  test_in_B                   150   66   30    54    0          0.550  [0.4608, 0.6361]   0.315
+
+BY_LENGTH
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  similar_length              115   38   43    34    0          0.528   [0.414, 0.6387]   0.724
+  test_longer(>1.2x)           52   17    5    30    0          0.362  [0.2397, 0.5046]   0.079
+  test_shorter(<0.8x)         133   79   20    33    1          0.705  [0.6152, 0.7818]   0.000
+
+BY_TRUNCATION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  any_truncated                61   25   17    18    1          0.581  [0.4333, 0.7162]   0.360
+  none_truncated              239  109   51    79    0          0.580  [0.5083, 0.6481]   0.034
+
+BY_CATEGORY
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  benign_helpfulness           30   14    1    15    0          0.483  [0.3139, 0.6557]   1.000
+  calibration_and_uncertainty   30   16    6     8    0          0.667  [0.4671, 0.8203]   0.152
+  cyber_abuse                  30   15   10     5    0          0.750  [0.5313, 0.8881]   0.041
+  harmful_instructions         30   12    9     9    0          0.571  [0.3655, 0.7553]   0.664
+  hate_or_harassment           30   11   17     2    0          0.846  [0.5776, 0.9567]   0.022
+  legal_financial_safety       30   15    2    13    0          0.536  [0.3581, 0.7047]   0.851
+  medical_safety               30   13    5    12    0          0.520   [0.335, 0.6997]   1.000
+  privacy_and_doxxing          30   12   11     7    0          0.632  [0.4104, 0.8085]   0.359
+  safe_transformation          30   12    7    10    1          0.545  [0.3466, 0.7308]   0.832
+  self_harm_support            30   14    0    16    0          0.467  [0.3023, 0.6386]   0.856
+====================================================================================================
+dpo_hh_vs_sft_hh300_swapped_judged | test=dpo_hh vs ref=sft | rubric=safety | swap=True | judge=google/gemini-3.6-flash
+
+OVERALL
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  overall                     300  147   60    93    0          0.613  [0.5496, 0.6719]   0.001
+  excluding identical auto-ties  298  147   58    93    0          0.613  [0.5496, 0.6719]   0.001
+
+judge position picks (as shown): {'A': 136, 'B': 104, 'TIE': 60}
+
+BY_TEST_POSITION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  test_in_A                   150   64   33    53    0          0.547  [0.4567, 0.6343]   0.355
+  test_in_B                   150   83   27    40    0          0.675  [0.5878, 0.7512]   0.000
+
+BY_LENGTH
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  similar_length              115   41   39    35    0          0.539  [0.4282, 0.6469]   0.567
+  test_longer(>1.2x)           52   18    4    30    0          0.375  [0.2522, 0.5164]   0.111
+  test_shorter(<0.8x)         133   88   17    28    0          0.759  [0.6733, 0.8274]   0.000
+
+BY_TRUNCATION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  any_truncated                61   26   12    23    0          0.531   [0.3938, 0.663]   0.775
+  none_truncated              239  121   48    70    0          0.633  [0.5632, 0.6986]   0.000
+
+BY_CATEGORY
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  benign_helpfulness           30   16    1    13    0          0.552  [0.3755, 0.7159]   0.711
+  calibration_and_uncertainty   30   18    3     9    0          0.667  [0.4782, 0.8136]   0.122
+  cyber_abuse                  30   14    7     9    0          0.609  [0.4079, 0.7784]   0.405
+  harmful_instructions         30   10    7    13    0          0.435  [0.2563, 0.6319]   0.678
+  hate_or_harassment           30   16    9     5    0          0.762  [0.5491, 0.8937]   0.027
+  legal_financial_safety       30   16    5     9    0          0.640  [0.4452, 0.7975]   0.230
+  medical_safety               30   13    5    12    0          0.520   [0.335, 0.6997]   1.000
+  privacy_and_doxxing          30   11   13     6    0          0.647   [0.413, 0.8269]   0.332
+  safe_transformation          30   14    9     7    0          0.667  [0.4537, 0.8281]   0.189
+  self_harm_support            30   19    1    10    0          0.655  [0.4734, 0.8006]   0.136
+====================================================================================================
+dpo_uf_vs_sft_alpaca300_judged | test=dpo_uf vs ref=sft | rubric=general | swap=False | judge=google/gemini-3.6-flash
+
+OVERALL
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  overall                     300   94   60   146    0          0.392  [0.3321, 0.4547]   0.001
+  excluding identical auto-ties  295   94   55   146    0          0.392  [0.3321, 0.4547]   0.001
+
+judge position picks (as shown): {'A': 144, 'B': 96, 'TIE': 60}
+
+BY_TEST_POSITION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  test_in_A                   150   59   30    61    0          0.492    [0.4039, 0.58]   0.927
+  test_in_B                   150   35   30    85    0          0.292  [0.2178, 0.3784]   0.000
+
+BY_LENGTH
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  similar_length               81   35   27    19    0          0.648  [0.5148, 0.7618]   0.040
+  test_longer(>1.2x)          208   52   29   127    0          0.290   [0.229, 0.3609]   0.000
+  test_shorter(<0.8x)          11    7    4     0    0          1.000     [0.6457, 1.0]   0.016
+
+BY_TRUNCATION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  any_truncated                85   25   22    38    0          0.397  [0.2853, 0.5202]   0.130
+  none_truncated              215   69   38   108    0          0.390   [0.321, 0.4633]   0.004
+====================================================================================================
+dpo_uf_vs_sft_alpaca300_plainrubric_judged | test=dpo_uf vs ref=sft | rubric=general_plain | swap=False | judge=google/gemini-3.6-flash
+
+OVERALL
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  overall                     300   97   65   138    0          0.413  [0.3517, 0.4766]   0.009
+  excluding identical auto-ties  295   97   60   138    0          0.413  [0.3517, 0.4766]   0.009
+
+judge position picks (as shown): {'A': 134, 'B': 101, 'TIE': 65}
+
+BY_TEST_POSITION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  test_in_A                   150   60   26    64    0          0.484   [0.3977, 0.571]   0.788
+  test_in_B                   150   37   39    74    0          0.333  [0.2525, 0.4253]   0.001
+
+BY_LENGTH
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  similar_length               81   31   34    16    0          0.660  [0.5167, 0.7783]   0.040
+  test_longer(>1.2x)          208   55   31   122    0          0.311  [0.2472, 0.3823]   0.000
+  test_shorter(<0.8x)          11   11    0     0    0          1.000     [0.7412, 1.0]   0.001
+
+BY_TRUNCATION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  any_truncated                85   26   24    35    0          0.426   [0.3102, 0.551]   0.306
+  none_truncated              215   71   41   103    0          0.408  [0.3378, 0.4823]   0.018
+====================================================================================================
+dpo_uf_vs_sft_alpaca300_swapped_judged | test=dpo_uf vs ref=sft | rubric=general | swap=True | judge=google/gemini-3.6-flash
+
+OVERALL
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  overall                     300   94   75   131    0          0.418  [0.3552, 0.4831]   0.016
+  excluding identical auto-ties  295   94   70   131    0          0.418  [0.3552, 0.4831]   0.016
+
+judge position picks (as shown): {'A': 131, 'B': 94, 'TIE': 75}
+
+BY_TEST_POSITION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  test_in_A                   150   41   31    78    0          0.344  [0.2652, 0.4336]   0.001
+  test_in_B                   150   53   44    53    0          0.500  [0.4065, 0.5935]   1.000
+
+BY_LENGTH
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  similar_length               81   33   34    14    0          0.702  [0.5602, 0.8135]   0.008
+  test_longer(>1.2x)          208   53   38   117    0          0.312  [0.2469, 0.3849]   0.000
+  test_shorter(<0.8x)          11    8    3     0    0          1.000     [0.6756, 1.0]   0.008
+
+BY_TRUNCATION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  any_truncated                85   26   27    32    0          0.448  [0.3275, 0.5755]   0.512
+  none_truncated              215   68   48    99    0          0.407   [0.3356, 0.483]   0.020
+====================================================================================================
+dpo_uf_vs_sft_hh300_judged | test=dpo_uf vs ref=sft | rubric=safety | swap=False | judge=google/gemini-3.6-flash
+
+OVERALL
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  overall                     300   96   68   134    2          0.417   [0.3555, 0.482]   0.015
+  excluding identical auto-ties  300   96   68   134    2          0.417   [0.3555, 0.482]   0.015
+
+judge position picks (as shown): {'A': 134, 'B': 96, 'TIE': 68}
+
+BY_TEST_POSITION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  test_in_A                   150   56   36    56    2          0.500  [0.4089, 0.5911]   1.000
+  test_in_B                   150   40   32    78    0          0.339  [0.2599, 0.4283]   0.001
+
+BY_LENGTH
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  similar_length               97   28   37    31    1          0.475  [0.3527, 0.5996]   0.795
+  test_longer(>1.2x)          185   55   30   100    0          0.355  [0.2839, 0.4328]   0.000
+  test_shorter(<0.8x)          18   13    1     3    1          0.812  [0.5699, 0.9341]   0.021
+
+BY_TRUNCATION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  any_truncated                93   20   38    33    2          0.377  [0.2594, 0.5119]   0.098
+  none_truncated              207   76   30   101    0          0.429   [0.3587, 0.503]   0.071
+
+BY_CATEGORY
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  benign_helpfulness           30   15    1    14    0          0.517  [0.3443, 0.6861]   1.000
+  calibration_and_uncertainty   30    5    6    19    0          0.208  [0.0924, 0.4047]   0.007
+  cyber_abuse                  30   13   10     7    0          0.650  [0.4329, 0.8188]   0.263
+  harmful_instructions         30    4   14    12    0          0.250   [0.1018, 0.495]   0.077
+  hate_or_harassment           30    5   19     5    1          0.500  [0.2366, 0.7634]   1.000
+  legal_financial_safety       30    7    5    18    0          0.280  [0.1428, 0.4758]   0.043
+  medical_safety               30   10    2    18    0          0.357  [0.2071, 0.5417]   0.185
+  privacy_and_doxxing          30    8    6    16    0          0.333  [0.1797, 0.5329]   0.152
+  safe_transformation          30   19    2     8    1          0.704  [0.5152, 0.8415]   0.052
+  self_harm_support            30   10    3    17    0          0.370  [0.2153, 0.5577]   0.248
+====================================================================================================
+lora_vs_base_persona40_safety_judged | test=lora_r16_lr5e-5 vs ref=smollm2_base | rubric=persona_safety | swap=False | judge=google/gemini-3.6-flash
+
+OVERALL
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  overall                      40    3   32     5    0          0.375  [0.1368, 0.6943]   0.727
+  excluding identical auto-ties   38    3   30     5    0          0.375  [0.1368, 0.6943]   0.727
+
+judge position picks (as shown): {'A': 5, 'B': 3, 'TIE': 32}
+
+BY_TEST_POSITION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  test_in_A                    20    3   14     3    0          0.500  [0.1876, 0.8124]   1.000
+  test_in_B                    20    0   18     2    0          0.000     [0.0, 0.6576]   0.500
+
+BY_LENGTH
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  similar_length               22    1   19     2    0          0.333  [0.0615, 0.7923]   1.000
+  test_longer(>1.2x)            6    2    3     1    0          0.667  [0.2077, 0.9385]   1.000
+  test_shorter(<0.8x)          12    0   10     2    0          0.000     [0.0, 0.6576]   0.500
+
+BY_TRUNCATION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  any_truncated                 3    0    3     0    0              -                 -       -
+  none_truncated               37    3   29     5    0          0.375  [0.1368, 0.6943]   0.727
+
+BY_CATEGORY
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  coding                       10    0   10     0    0              -                 -       -
+  cooking                      10    0    9     1    0          0.000     [0.0, 0.7935]   1.000
+  general_help                 10    0   10     0    0              -                 -       -
+  safety_sensitive             10    3    3     4    0          0.429  [0.1582, 0.7495]   1.000
+====================================================================================================
+lora_vs_base_persona40_style_judged | test=lora_r16_lr5e-5 vs ref=smollm2_base | rubric=persona_style | swap=False | judge=google/gemini-3.6-flash
+
+OVERALL
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  overall                      40    0   40     0    0              -                 -       -
+  excluding identical auto-ties   38    0   38     0    0              -                 -       -
+
+judge position picks (as shown): {'A': 0, 'B': 0, 'TIE': 40}
+
+BY_TEST_POSITION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  test_in_A                    20    0   20     0    0              -                 -       -
+  test_in_B                    20    0   20     0    0              -                 -       -
+
+BY_LENGTH
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  similar_length               22    0   22     0    0              -                 -       -
+  test_longer(>1.2x)            6    0    6     0    0              -                 -       -
+  test_shorter(<0.8x)          12    0   12     0    0              -                 -       -
+
+BY_TRUNCATION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  any_truncated                 3    0    3     0    0              -                 -       -
+  none_truncated               37    0   37     0    0              -                 -       -
+
+BY_CATEGORY
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  coding                       10    0   10     0    0              -                 -       -
+  cooking                      10    0   10     0    0              -                 -       -
+  general_help                 10    0   10     0    0              -                 -       -
+  safety_sensitive             10    0   10     0    0              -                 -       -
+====================================================================================================
+lora_vs_base_persona40_useful_judged | test=lora_r16_lr5e-5 vs ref=smollm2_base | rubric=general | swap=False | judge=google/gemini-3.6-flash
+
+OVERALL
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  overall                      40   15   10    15    0          0.500  [0.3315, 0.6685]   1.000
+  excluding identical auto-ties   38   15    8    15    0          0.500  [0.3315, 0.6685]   1.000
+
+judge position picks (as shown): {'A': 22, 'B': 8, 'TIE': 10}
+
+BY_TEST_POSITION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  test_in_A                    20   11    5     4    0          0.733   [0.4805, 0.891]   0.118
+  test_in_B                    20    4    5    11    0          0.267   [0.109, 0.5195]   0.118
+
+BY_LENGTH
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  similar_length               22    8    7     7    0          0.533  [0.3012, 0.7519]   1.000
+  test_longer(>1.2x)            6    2    0     4    0          0.333     [0.0968, 0.7]   0.688
+  test_shorter(<0.8x)          12    5    3     4    0          0.556  [0.2666, 0.8112]   1.000
+
+BY_TRUNCATION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  any_truncated                 3    2    1     0    0          1.000     [0.3424, 1.0]   0.500
+  none_truncated               37   13    9    15    0          0.464  [0.2953, 0.6419]   0.851
+
+BY_CATEGORY
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  coding                       10    2    5     3    0          0.400  [0.1176, 0.7693]   1.000
+  cooking                      10    6    2     2    0          0.750  [0.4093, 0.9285]   0.289
+  general_help                 10    3    0     7    0          0.300  [0.1078, 0.6032]   0.344
+  safety_sensitive             10    4    3     3    0          0.571  [0.2505, 0.8418]   1.000

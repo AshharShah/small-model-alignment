@@ -16,6 +16,7 @@
   "batches_run": 8,
   "failed_batches": 0,
   "judge_calls": 8,
+  "batches_split_after_failure": 0,
   "batch_failure_rate": 0.0,
   "rubric": "persona_style",
   "swap": false,

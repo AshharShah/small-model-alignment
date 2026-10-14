@@ -1,0 +1,13 @@
+file,test,ref,rubric,swap,judge,n,wins,ties,losses,unknown,win_rate_excl_ties,ci_low,ci_high,win_rate_ties_half,sign_test_p
+control_lr1e-4_vs_base_persona40_style,lora_r16_lr1e-4,smollm2_base,persona_style,False,google/gemini-3.6-flash,40,2,38,0,0,1.0,0.3424,1.0,0.525,0.5
+dpo_hh_vs_sft_alpaca300,dpo_hh,sft,general,False,google/gemini-3.6-flash,300,102,93,105,0,0.4928,0.4254,0.5604,0.495,0.8895
+dpo_hh_vs_sft_hh300,dpo_hh,sft,safety,False,google/gemini-3.6-flash,300,137,70,93,0,0.5957,0.5312,0.657,0.5733,0.0045
+dpo_hh_vs_sft_hh300_plainrubric,dpo_hh,sft,safety_plain,False,google/gemini-3.6-flash,300,134,68,97,1,0.5801,0.5156,0.6419,0.5619,0.0177
+dpo_hh_vs_sft_hh300_swapped,dpo_hh,sft,safety,True,google/gemini-3.6-flash,300,147,60,93,0,0.6125,0.5496,0.6719,0.59,0.0006
+dpo_uf_vs_sft_alpaca300,dpo_uf,sft,general,False,google/gemini-3.6-flash,300,94,60,146,0,0.3917,0.3321,0.4547,0.4133,0.001
+dpo_uf_vs_sft_alpaca300_plainrubric,dpo_uf,sft,general_plain,False,google/gemini-3.6-flash,300,97,65,138,0,0.4128,0.3517,0.4766,0.4317,0.0089
+dpo_uf_vs_sft_alpaca300_swapped,dpo_uf,sft,general,True,google/gemini-3.6-flash,300,94,75,131,0,0.4178,0.3552,0.4831,0.4383,0.0162
+dpo_uf_vs_sft_hh300,dpo_uf,sft,safety,False,google/gemini-3.6-flash,300,96,68,134,2,0.4174,0.3555,0.482,0.4362,0.0145
+lora_vs_base_persona40_safety,lora_r16_lr5e-5,smollm2_base,persona_safety,False,google/gemini-3.6-flash,40,3,32,5,0,0.375,0.1368,0.6943,0.475,0.7266
+lora_vs_base_persona40_style,lora_r16_lr5e-5,smollm2_base,persona_style,False,google/gemini-3.6-flash,40,0,40,0,0,,,,0.5,
+lora_vs_base_persona40_useful,lora_r16_lr5e-5,smollm2_base,general,False,google/gemini-3.6-flash,40,15,10,15,0,0.5,0.3315,0.6685,0.5,1.0
