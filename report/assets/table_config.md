@@ -8,7 +8,8 @@
 | batch (device x accum = effective) | 2 x 16 = 32 | 1 pair x 32 = 32 | 1 pair x 32 = 32 | 4 x 4 = 16 |
 | precision | fp32 weights, fp16 autocast | policy fp32 + fp16 autocast; reference fp32 (autocast) | policy fp32 + fp16 autocast; reference fp32 (autocast) | fp32 weights, fp16 autocast |
 | max length / epochs | 512 / 1 | 512 / 1 | 512 / 1 | 512 / 3.0 |
-| optimizer steps | 937 | 468 | 468 | see runs/*_metrics.json |
+| optimizer steps | 937 | 468 | 468 | 39 |
 | train / val examples | 30000 / 1000 | 15000 / 1000 | 15000 / 1000 | 198 / 22 |
-| DPO beta / reference | - | 0.1 / frozen SFT best | 0.1 / frozen SFT best | 0.1 / base model, adapter disabled |
+| DPO beta / reference | - | 0.1 / frozen SFT best | 0.1 / frozen SFT best | 0.1 / base model, adapter disabled; plus NLL term on the chosen answer, rpo_alpha=1.0 |
 | seed | 42 | 42 | 42 | 42 |
+| generation settings (evaluation) | greedy (do_sample=False; temperature and top-p unused), max_new_tokens=512, repetition_penalty=1.0, length_penalty=1.0, no_repeat_ngram_size=0; prompt template '### Instruction / ### Response', no chat template | greedy (do_sample=False; temperature and top-p unused), max_new_tokens=512, repetition_penalty=1.0, length_penalty=1.0, no_repeat_ngram_size=0; prompt template '### Instruction / ### Response', no chat template | greedy (do_sample=False; temperature and top-p unused), max_new_tokens=512, repetition_penalty=1.0, length_penalty=1.0, no_repeat_ngram_size=0; prompt template '### Instruction / ### Response', no chat template | greedy (do_sample=False; temperature and top-p unused), max_new_tokens=512, repetition_penalty=1.0, length_penalty=1.0, no_repeat_ngram_size=0; SmolLM2 chat template |

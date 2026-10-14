@@ -1,0 +1,44 @@
+{
+  "run": "r16_lr5e-5",
+  "base_model": "HuggingFaceTB/SmolLM2-360M-Instruct",
+  "lora_r": 16,
+  "lora_alpha": 32,
+  "lora_dropout": 0.05,
+  "target_modules": [
+    "q_proj",
+    "k_proj",
+    "v_proj",
+    "o_proj",
+    "gate_proj",
+    "up_proj",
+    "down_proj"
+  ],
+  "lr": 5e-05,
+  "beta": 0.1,
+  "epochs": 3.0,
+  "per_device_batch_size": 4,
+  "grad_accum": 4,
+  "effective_batch_size": 16,
+  "warmup_steps": 3,
+  "lr_scheduler": "cosine",
+  "max_grad_norm": 1.0,
+  "max_length": 512,
+  "seed": 42,
+  "n_train": 198,
+  "n_val": 22,
+  "trainable_params": 8683520,
+  "total_params": 370504640,
+  "final_eval": {
+    "eval_loss": 0.3124988377094269,
+    "eval_rewards/chosen": 0.790259838104248,
+    "eval_rewards/rejected": -0.22668831050395966,
+    "eval_rewards/accuracies": 1.0,
+    "eval_rewards/margins": 1.0169481039047241
+  },
+  "versions": {
+    "torch": "2.11.0+cu128",
+    "transformers": "4.57.6",
+    "trl": "0.25.1",
+    "peft": "0.20.0"
+  }
+}

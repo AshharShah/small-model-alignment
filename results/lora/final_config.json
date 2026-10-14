@@ -1,5 +1,5 @@
 {
-  "run": "r16_lr5e-5",
+  "run": "r16_lr5e-5_rpo1",
   "base_model": "HuggingFaceTB/SmolLM2-360M-Instruct",
   "lora_r": 16,
   "lora_alpha": 32,
@@ -15,7 +15,9 @@
   ],
   "lr": 5e-05,
   "beta": 0.1,
+  "rpo_alpha": 1.0,
   "epochs": 3.0,
+  "optimizer_steps": 39,
   "per_device_batch_size": 4,
   "grad_accum": 4,
   "effective_batch_size": 16,
@@ -29,16 +31,21 @@
   "trainable_params": 8683520,
   "total_params": 370504640,
   "final_eval": {
-    "eval_loss": 0.3124988377094269,
-    "eval_rewards/chosen": 0.790259838104248,
-    "eval_rewards/rejected": -0.22668831050395966,
+    "eval_loss": 3.847038507461548,
+    "eval_rewards/chosen": 1.218129277229309,
+    "eval_rewards/rejected": 0.262731671333313,
     "eval_rewards/accuracies": 1.0,
-    "eval_rewards/margins": 1.0169481039047241
+    "eval_rewards/margins": 0.9553977847099304,
+    "eval_nll_loss": 3.4939849376678467
   },
   "versions": {
-    "torch": "2.11.0+cu128",
-    "transformers": "4.57.6",
     "trl": "0.25.1",
-    "peft": "0.20.0"
+    "peft": "0.20.0",
+    "torch": "2.11.0+cu128"
+  },
+  "selected_by": {
+    "selection_file": "results/lora/v2/persona_v2_selection.json",
+    "selected": "r16_lr5e-5_rpo1",
+    "style_shift_significant": false
   }
 }

@@ -116,9 +116,40 @@ def cmd_overview(args):
               f"{wr:>7s}{str(r['sign_test_p']):>8s}")
 
 
+def cmd_final_config(args):
+    m = json.load(open(args.metrics))
+    a, fe = m["args"], m["final_eval"]
+    sel = json.load(open(args.selection))
+    run = run_name(args.metrics)
+    cfg = {
+        "run": run, "base_model": a["model_name"], "lora_r": a["lora_r"], "lora_alpha": a["lora_alpha"],
+        "lora_dropout": a["lora_dropout"], "target_modules": a["target_modules"], "lr": a["lr"], "beta": a["beta"],
+        "rpo_alpha": a.get("rpo_alpha", 0.0), "epochs": a["epochs"],
+        "optimizer_steps": max((r.get("step", 0) for r in m["log_history"]), default=0),
+        "per_device_batch_size": a["batch_size"], "grad_accum": a["grad_accum"],
+        "effective_batch_size": a["batch_size"] * a["grad_accum"], "warmup_steps": a["warmup_steps"],
+        "lr_scheduler": a["lr_scheduler"], "max_grad_norm": a["max_grad_norm"], "max_length": a["max_length"],
+        "seed": a["seed"], "n_train": m["n_train"], "n_val": m["n_val"], "trainable_params": m["trainable_params"],
+        "total_params": m["total_params"],
+        "final_eval": {k: v for k, v in fe.items() if "rewards" in k or k in ("eval_loss", "eval_nll_loss")},
+        "versions": m.get("versions", {}),
+        "selected_by": {"selection_file": args.selection, "selected": sel["selected"],
+                        "style_shift_significant": sel["selected_style_shift_significant"]},
+    }
+    assert sel["selected"] == run, f"selection picked {sel['selected']!r}, not {run!r}"
+    Path(args.out).parent.mkdir(parents=True, exist_ok=True)
+    Path(args.out).write_text(json.dumps(cfg, indent=2))
+    print("wrote", args.out, "for", run)
+
+
 def main():
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
+    f = sub.add_parser("final_config")
+    f.add_argument("--metrics", required=True)
+    f.add_argument("--selection", required=True)
+    f.add_argument("--out", required=True)
+    f.set_defaults(fn=cmd_final_config)
     t = sub.add_parser("table")
     t.add_argument("--metrics", nargs="+", required=True)
     t.add_argument("--out_csv", required=True)

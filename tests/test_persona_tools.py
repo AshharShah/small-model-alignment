@@ -187,3 +187,27 @@ def test_select_command_end_to_end(tmp_path, capsys):
     result = json.loads(out.read_text())
     assert result["selected"] == "good" and result["selected_style_shift_significant"] is True
     assert {c["name"]: c["degenerate"] for c in result["candidates"]} == {"good": False, "loopy": True}
+
+
+def test_final_config_has_every_field_the_report_table_reads_and_refuses_a_mismatched_run(tmp_path):
+    metrics = {"args": {"model_name": "m", "lora_r": 16, "lora_alpha": 32, "lora_dropout": 0.05, "target_modules": ["q_proj"],
+                        "lr": 5e-5, "beta": 0.1, "rpo_alpha": 1.0, "epochs": 3.0, "batch_size": 4, "grad_accum": 4,
+                        "warmup_steps": 3, "lr_scheduler": "cosine", "max_grad_norm": 1.0, "max_length": 512, "seed": 42},
+               "n_train": 198, "n_val": 22, "trainable_params": 8683520, "total_params": 370504640,
+               "final_eval": {"eval_loss": 0.5, "eval_nll_loss": 2.0, "eval_rewards/margins": 1.0, "eval_runtime": 3.0},
+               "log_history": [{"step": 13}, {"step": 39}, {"eval_loss": 0.5}], "versions": {"trl": "0.25.1"}}
+    mp, sp, out = tmp_path / "run_a_metrics.json", tmp_path / "sel.json", tmp_path / "final_config.json"
+    mp.write_text(json.dumps(metrics))
+    sp.write_text(json.dumps({"selected": "run_a", "selected_style_shift_significant": False}))
+    sys.argv = ["x", "final_config", "--metrics", str(mp), "--selection", str(sp), "--out", str(out)]
+    pst.main()
+    cfg = json.loads(out.read_text())
+    needed = ["lora_r", "lora_alpha", "lora_dropout", "trainable_params", "lr", "lr_scheduler", "warmup_steps", "max_grad_norm",
+              "per_device_batch_size", "grad_accum", "effective_batch_size", "max_length", "epochs", "n_train", "n_val", "beta", "seed",
+              "rpo_alpha", "optimizer_steps"]
+    assert all(k in cfg for k in needed)
+    assert (cfg["effective_batch_size"], cfg["optimizer_steps"], cfg["rpo_alpha"]) == (16, 39, 1.0)
+    assert "eval_runtime" not in cfg["final_eval"] and cfg["final_eval"]["eval_nll_loss"] == 2.0
+    sp.write_text(json.dumps({"selected": "someone_else", "selected_style_shift_significant": False}))
+    with pytest.raises(AssertionError):
+        pst.main()
