@@ -1,13 +1,3 @@
-"""Summarize judged pairwise files (Task 7): win / tie / loss with uncertainty, and where the effect comes from.
-
-For each judged file it reports, for the model under test against its reference:
-  * overall counts, win rate with and without ties, Wilson 95% interval, exact two-sided sign test (ties dropped)
-  * position bias of the judge (how often it picked A / B)
-  * the same table split by prompt category (HH eval), by response-length relation, and by truncation
-
-Length matters because LLM judges tend to favour longer answers: the "length" split shows whether wins come only
-from pairs where the model under test wrote the longer response.
-"""
 import argparse
 import json
 import math
@@ -25,7 +15,6 @@ def wilson(k, n, z=1.96):
 
 
 def sign_test_p(wins, losses):
-    """Exact two-sided binomial test of wins vs losses under p = 0.5 (ties excluded)."""
     n = wins + losses
     if n == 0:
         return None

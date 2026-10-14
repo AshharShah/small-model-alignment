@@ -1,20 +1,3 @@
-"""Build single-turn DPO preference files (train/val) for HH-RLHF or UltraFeedback.
-
-Both datasets are reduced to (prompt, chosen, rejected) triples, shuffled with a fixed seed, and kept only if
-
-    prompt tokens <= --max_prompt_length   and
-    prompt + chosen + EOS <= --max_length  and  prompt + rejected + EOS <= --max_length
-
-so no pair needs truncation and every response keeps its EOS. Token counts use the same
-template (alignment.prompts.format_prompt) as SFT and generation.
-
-HH-RLHF      : keep conversations with exactly one Human and one Assistant turn, identical prompts.
-UltraFeedback: keep rows with score_chosen > score_rejected (ties are dropped) and 1-turn messages.
-
-Output: <out_dir>/dpo_<name>_train.jsonl, dpo_<name>_val.jsonl, dpo_<name>_manifest.json
-Validation comes from the dataset's test split; if that yields fewer than --n_val pairs, the rest is taken
-from rows of the shuffled train split that were not used for training (never overlapping).
-"""
 import argparse
 import hashlib
 import json
@@ -27,7 +10,6 @@ HUMAN, ASSISTANT = "\n\nHuman:", "\n\nAssistant:"
 
 
 def parse_hh(example):
-    """-> (prompt, chosen, rejected) or a string naming the reason the row was skipped."""
     parts = []
     for key in ("chosen", "rejected"):
         text = example[key]
@@ -61,7 +43,6 @@ PARSERS = {"hh": parse_hh, "uf": parse_uf}
 
 
 def collect(rows, parse, tokenizer, n, max_length, max_prompt_length, stats):
-    """rows: an iterable (pass an iterator to resume where a previous call stopped)."""
     kept = []
     for ex in rows:
         stats["seen"] += 1
@@ -74,7 +55,7 @@ def collect(rows, parse, tokenizer, n, max_length, max_prompt_length, stats):
             stats["skipped_empty_or_identical"] = stats.get("skipped_empty_or_identical", 0) + 1
             continue
         n_p = len(tokenizer.encode(format_prompt(prompt), add_special_tokens=False))
-        n_c = len(tokenizer.encode(chosen, add_special_tokens=False)) + 1  # + EOS
+        n_c = len(tokenizer.encode(chosen, add_special_tokens=False)) + 1
         n_r = len(tokenizer.encode(rejected, add_special_tokens=False)) + 1
         if n_p > max_prompt_length or n_p + n_c > max_length or n_p + n_r > max_length:
             stats["skipped_too_long"] = stats.get("skipped_too_long", 0) + 1
@@ -147,7 +128,7 @@ def main():
     vstats = {"seen": 0}
     val = collect(iter(load_dataset(repo, split=val_split).shuffle(seed=args.seed)), n=args.n_val, stats=vstats, **kw)
     from_holdout = 0
-    if len(val) < args.n_val:  # top up from train rows that were never used for training
+    if len(val) < args.n_val:
         extra = collect(train_iter, n=args.n_val - len(val), stats=vstats, **kw)
         from_holdout = len(extra)
         val += extra

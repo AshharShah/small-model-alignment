@@ -1,13 +1,3 @@
-"""Build every table and figure of the final report from the files under results/ (Task 8).
-
-Nothing is typed by hand: each number in the report comes from a committed file, so staff can regenerate it with
-
-    python scripts/make_report_assets.py            # writes report/assets/*
-
-Outputs (report/assets/): fig_training.png, fig_winrates.png, fig_lora_sweep.png,
-table_config.md, table_generation.md, table_judge.md, table_judge_strata.md, table_lora_sweep.md, key_numbers.json
-Missing inputs are reported and skipped, so partial results still produce partial assets.
-"""
 import argparse
 import csv
 import json
@@ -19,7 +9,7 @@ from pathlib import Path
 import matplotlib
 
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt  # noqa: E402
+import matplotlib.pyplot as plt
 
 
 def jl(path):
@@ -44,7 +34,6 @@ def md_table(header, rows):
     return "\n".join(lines) + "\n"
 
 
-# --------------------------------------------------------------------------- training figure
 def fig_training(root, out, key):
     sft = root / "results/sft/metrics.jsonl"
     dpo = {n: root / f"results/dpo_{n}/metrics.jsonl" for n in ("hh", "uf")}
@@ -79,7 +68,6 @@ def fig_training(root, out, key):
     fig.tight_layout(); fig.savefig(out / "fig_training.png", dpi=170); plt.close(fig)
 
 
-# --------------------------------------------------------------------------- configuration table
 def table_config(root, out):
     rows, header = [], ["", "SFT", "HH-RLHF DPO", "UltraFeedback DPO", "LoRA-DPO (TRL)"]
     try:
@@ -118,7 +106,6 @@ def table_config(root, out):
     (out / "table_config.md").write_text(md_table(header, rows))
 
 
-# --------------------------------------------------------------------------- generation statistics
 def looping(text, k=3, n_gram=5):
     t = re.sub(r"(?m)^\s*(\d+[.)]|[-*\u2022])\s+", "", text.lower())
     w = t.split()
@@ -143,7 +130,7 @@ def table_generation(root, out, key):
             continue
         res = js(p)
         toks = [r["num_new_tokens"] for r in res]
-        cap = 512                                   # every final generation used max_new_tokens=512
+        cap = 512
         row = {"EOS": sum(r["hit_eos"] for r in res), "cap": sum(t >= cap for t in toks), "mean": round(statistics.mean(toks)),
                "median": round(statistics.median(toks)), "loops": sum(looping(r["output"]) for r in res), "n": len(res)}
         rows.append([model, evalset, row["n"], row["EOS"], row["cap"], row["mean"], row["median"], row["loops"]])
@@ -153,7 +140,6 @@ def table_generation(root, out, key):
             ["model", "eval set", "n", "ended with EOS", "hit token cap", "mean tokens", "median tokens", "repeated-phrase outputs"], rows))
 
 
-# --------------------------------------------------------------------------- judge tables and win-rate figure
 PRIMARY = [("dpo_uf_vs_sft_alpaca300", "DPO-UF vs SFT, AlpacaEval (general)"),
            ("dpo_hh_vs_sft_hh300", "DPO-HH vs SFT, HH eval (safety)"),
            ("dpo_hh_vs_sft_alpaca300", "DPO-HH vs SFT, AlpacaEval (alignment tax)"),
@@ -199,7 +185,6 @@ def table_judge(root, out, key):
 
 
 def table_judge_strata(root, out):
-    """Win rate by response-length relation for the main comparisons (from the analysis JSONs)."""
     rows = []
     for fn, label in (("dpo_uf_vs_sft_alpaca300", "DPO-UF vs SFT (AlpacaEval)"), ("dpo_hh_vs_sft_hh300", "DPO-HH vs SFT (HH eval)"),
                       ("dpo_hh_vs_sft_alpaca300", "DPO-HH vs SFT (AlpacaEval)"), ("dpo_uf_vs_sft_hh300", "DPO-UF vs SFT (HH eval)"),
@@ -217,7 +202,6 @@ def table_judge_strata(root, out):
             ["comparison", "length of model under test vs reference", "n", "win", "tie", "loss", "win rate (no ties)", "p"], rows))
 
 
-# --------------------------------------------------------------------------- LoRA sweep
 def table_lora(root, out):
     sw, st = root / "results/lora/sweep_table.csv", root / "results/lora/style_stats.csv"
     if not (sw.exists() and st.exists()):

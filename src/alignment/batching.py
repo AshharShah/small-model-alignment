@@ -1,17 +1,3 @@
-"""Batch construction for SFT and DPO with response-only labels.
-
-Conventions (shared by every training script and by submission_adapter.py):
-
-* The caller supplies already-formatted prompt strings; no template is applied here.
-* prompt and response are tokenized separately (add_special_tokens=False) and
-  concatenated, so the prompt/response boundary is exact.
-* If the tokenizer has an EOS id it is appended to the response BEFORE truncation,
-  so a response cut at ``max_length`` loses its EOS.
-* Labels are NOT shifted. ``labels[i, t] == input_ids[i, t]`` on response tokens and
-  -100 on prompt and padding tokens. The one-token shift happens when scoring.
-* Right padding to the longest row in the batch; row order is preserved.
-"""
-
 from __future__ import annotations
 
 import torch
@@ -27,7 +13,6 @@ def _pad_token_id(tokenizer) -> int:
 
 
 def build_sft_batch(tokenizer, prompts, responses, max_length):
-    """Return ``{"input_ids", "attention_mask", "labels"}`` LongTensors of shape [B, T]."""
     if len(prompts) != len(responses):
         raise ValueError(f"got {len(prompts)} prompts but {len(responses)} responses")
     if max_length < 1:
@@ -61,7 +46,6 @@ def build_sft_batch(tokenizer, prompts, responses, max_length):
 
 
 def build_dpo_batch(tokenizer, prompts, chosen_responses, rejected_responses, max_length):
-    """Return ``{"chosen": batch, "rejected": batch}`` built with identical prompt handling."""
     if not (len(prompts) == len(chosen_responses) == len(rejected_responses)):
         raise ValueError("prompts, chosen_responses and rejected_responses must have equal length")
     return {

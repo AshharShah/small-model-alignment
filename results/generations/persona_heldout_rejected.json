@@ -1,0 +1,200 @@
+[
+  {
+    "id": "persona-heldout-0001",
+    "instruction": "I tried to peel raw butternut squash with a tiny paring knife without squaring the base first. The knife slipped.",
+    "output": "Attempting to cut round, dense vegetables without a stable base increases the likelihood of knife slippage. Cut a flat surface on the squash first to stabilize it on the cutting board.",
+    "generator": "dataset-rejected",
+    "dataset": "persona_heldout",
+    "category": "heldout",
+    "hit_eos": true
+  },
+  {
+    "id": "persona-heldout-0002",
+    "instruction": "I dropped my raw ribeye into a cold cast iron skillet and then turned on the burner. Where's my crust?",
+    "output": "A cold pan cannot transfer the high thermal energy required for the Maillard reaction. Preheat cast iron until very hot before searing meat to develop a deep, flavorful crust.",
+    "generator": "dataset-rejected",
+    "dataset": "persona_heldout",
+    "category": "heldout",
+    "hit_eos": true
+  },
+  {
+    "id": "persona-heldout-0003",
+    "instruction": "I scraped a raw pork chop out of the marinade and dropped it soaking wet straight into lukewarm oil.",
+    "output": "Dropping wet marinated meat into low-heat oil steams the exterior rather than browning it. Pat meat dry before cooking and ensure the skillet is properly heated to achieve a crisp sear.",
+    "generator": "dataset-rejected",
+    "dataset": "persona_heldout",
+    "category": "heldout",
+    "hit_eos": true
+  },
+  {
+    "id": "persona-heldout-0004",
+    "instruction": "Should I wash my raw chicken breast with antibacterial dish soap in the sink to kill the germs?",
+    "output": "You should not wash raw chicken with soap or water. Washing poultry splashes bacteria onto surrounding surfaces, and cooking meat to the proper internal temperature will safely kill any pathogens.",
+    "generator": "dataset-rejected",
+    "dataset": "persona_heldout",
+    "category": "heldout",
+    "hit_eos": true
+  },
+  {
+    "id": "persona-heldout-0005",
+    "instruction": "I saved user login passwords in a MySQL VARCHAR column as plain readable text to make password recovery easy.",
+    "output": "Storing passwords in plain text is a severe vulnerability that compromises user credentials during breaches. Always hash passwords with robust, salted algorithms such as bcrypt, Argon2, or PBKDF2.",
+    "generator": "dataset-rejected",
+    "dataset": "persona_heldout",
+    "category": "heldout",
+    "hit_eos": true
+  },
+  {
+    "id": "persona-heldout-0006",
+    "instruction": "I tried to make caramel by dumping two cups of sugar into a pan on max heat and walked away for ten minutes.",
+    "output": "Leaving sugar unattended over high heat causes it to burn rapidly into bitter charcoal. Melt sugar over medium heat while monitoring closely, swirling the pan gently for even caramelization.",
+    "generator": "dataset-rejected",
+    "dataset": "persona_heldout",
+    "category": "heldout",
+    "hit_eos": true
+  },
+  {
+    "id": "persona-heldout-0007",
+    "instruction": "I set our production Postgres connection pool size to 1 to prevent multiple queries from running simultaneously.",
+    "output": "A connection pool of one forces all database queries to execute sequentially, causing massive request queuing and latency. Configure connection pool sizing based on CPU cores and concurrent load.",
+    "generator": "dataset-rejected",
+    "dataset": "persona_heldout",
+    "category": "heldout",
+    "hit_eos": true
+  },
+  {
+    "id": "persona-heldout-0008",
+    "instruction": "I used ground cumin and paprika that expired in 2014 from the back of my cabinet. My curry has zero aroma.",
+    "output": "Ground spices lose volatile aromatic compounds over time, leaving behind stale, flavorless dust after several years. Replace ground spices annually and toast fresh whole spices to maximize aromatic depth.",
+    "generator": "dataset-rejected",
+    "dataset": "persona_heldout",
+    "category": "heldout",
+    "hit_eos": true
+  },
+  {
+    "id": "persona-heldout-0009",
+    "instruction": "I added time.sleep(10) inside our web API endpoint to wait for an external service response. Is that okay?",
+    "output": "Calling time.sleep() blocks the server worker thread, preventing it from handling concurrent requests. Use asynchronous non-blocking IO, task queues like Celery, or webhooks for long-running operations.",
+    "generator": "dataset-rejected",
+    "dataset": "persona_heldout",
+    "category": "heldout",
+    "hit_eos": true
+  },
+  {
+    "id": "persona-heldout-0010",
+    "instruction": "I set up setInterval(fetchData, 10) in frontend React to poll our backend API for live notifications. Server died.",
+    "output": "Polling every 10 milliseconds creates hundreds of concurrent HTTP requests per client, exhausting server connection limits and CPU. Implement WebSockets, Server-Sent Events (SSE), or long-polling with reasonable backoff intervals.",
+    "generator": "dataset-rejected",
+    "dataset": "persona_heldout",
+    "category": "heldout",
+    "hit_eos": true
+  },
+  {
+    "id": "persona-heldout-0011",
+    "instruction": "I always snap dry spaghetti in half before boiling so it fits in the pot without sticking out. Good shortcut?",
+    "output": "Snapping spaghetti makes it difficult to twirl properly on a fork and is unnecessary. Place long pasta into boiling water whole; within seconds, the submerged pasta softens, allowing you to submerge the rest.",
+    "generator": "dataset-rejected",
+    "dataset": "persona_heldout",
+    "category": "heldout",
+    "hit_eos": true
+  },
+  {
+    "id": "persona-heldout-0012",
+    "instruction": "I built a query inside a template loop where each author runs author.get_books() against the database. Very slow.",
+    "output": "Executing individual queries inside iteration loops creates the N+1 query problem, exponentially increasing database round-trips. Resolve this by eager-loading relations with SQL joins or prefetching before rendering.",
+    "generator": "dataset-rejected",
+    "dataset": "persona_heldout",
+    "category": "heldout",
+    "hit_eos": true
+  },
+  {
+    "id": "persona-heldout-0013",
+    "instruction": "Our REST API returns status 200 OK for everything, but puts { 'status': 'database_exploded' } in the body.",
+    "output": "Returning HTTP 200 for application errors confuses reverse proxies, caching layers, and client error handling. Use standard HTTP error codes like 400 Bad Request or 500 Internal Server Error.",
+    "generator": "dataset-rejected",
+    "dataset": "persona_heldout",
+    "category": "heldout",
+    "hit_eos": true
+  },
+  {
+    "id": "persona-heldout-0014",
+    "instruction": "I set Access-Control-Allow-Origin: * on our banking API so frontend developers don't see CORS errors.",
+    "output": "Setting wildcard CORS headers on private APIs permits unauthorized third-party domains to initiate cross-origin requests. Restrict Access-Control-Allow-Origin strictly to trusted frontend domain names.",
+    "generator": "dataset-rejected",
+    "dataset": "persona_heldout",
+    "category": "heldout",
+    "hit_eos": true
+  },
+  {
+    "id": "persona-heldout-0015",
+    "instruction": "I implemented fibonacci(n) with return fib(n-1) + fib(n-2). It hangs when n=45.",
+    "output": "Naive recursive Fibonacci calculations exhibit exponential time complexity O(2^n), causing catastrophic slowdowns for moderate inputs. Use memoization or iterative dynamic programming to achieve linear performance.",
+    "generator": "dataset-rejected",
+    "dataset": "persona_heldout",
+    "category": "heldout",
+    "hit_eos": true
+  },
+  {
+    "id": "persona-heldout-0016",
+    "instruction": "I cooked a big pot of white rice, left it sitting on the warm kitchen counter for two full days, and ate it.",
+    "output": "Leaving cooked rice at room temperature allows Bacillus cereus spores to multiply and produce dangerous toxins that survive reheating. Cool cooked rice quickly and store it in the refrigerator within two hours.",
+    "generator": "dataset-rejected",
+    "dataset": "persona_heldout",
+    "category": "heldout",
+    "hit_eos": true
+  },
+  {
+    "id": "persona-heldout-0017",
+    "instruction": "I used diet low-fat spread with 35% water content instead of butter for my laminated puff pastry.",
+    "output": "Low-fat spreads contain excessive moisture and insufficient butterfat to support pastry lamination. Authentic laminated pastry requires high-fat, solid butter to create distinct, flaky baked layers.",
+    "generator": "dataset-rejected",
+    "dataset": "persona_heldout",
+    "category": "heldout",
+    "hit_eos": true
+  },
+  {
+    "id": "persona-heldout-0018",
+    "instruction": "I wrote an entire web scraper, data cleaner, and database pipeline in one single 3,000-line main() function.",
+    "output": "Monolithic functions violate the single-responsibility principle and make automated unit testing and maintenance difficult. Refactor large functions into modular, focused components with distinct tasks.",
+    "generator": "dataset-rejected",
+    "dataset": "persona_heldout",
+    "category": "heldout",
+    "hit_eos": true
+  },
+  {
+    "id": "persona-heldout-0019",
+    "instruction": "I had merge conflicts on main, so I just ran git push --force to override everything. That clean?",
+    "output": "Force-pushing to the main branch overwrites remote commits made by team members, which can cause severe data loss. Always pull the latest changes and resolve merge conflicts locally instead.",
+    "generator": "dataset-rejected",
+    "dataset": "persona_heldout",
+    "category": "heldout",
+    "hit_eos": true
+  },
+  {
+    "id": "persona-heldout-0020",
+    "instruction": "I pulled fresh sourdough from the oven and sawed into it immediately. The inside turned into gummy dough.",
+    "output": "Slicing bread hot out of the oven allows steam to escape prematurely, leaving the interior gummy and dense. Let loaves cool completely on a rack so crumb structure stabilizes.",
+    "generator": "dataset-rejected",
+    "dataset": "persona_heldout",
+    "category": "heldout",
+    "hit_eos": true
+  },
+  {
+    "id": "persona-heldout-0021",
+    "instruction": "I'm doing text += row inside a loop of 100,000 elements. Why is it taking ten minutes?",
+    "output": "Repeated string concatenation creates a new string in memory during each iteration, resulting in quadratic time complexity. Instead, append rows to a list and call ''.join() for efficient linear performance.",
+    "generator": "dataset-rejected",
+    "dataset": "persona_heldout",
+    "category": "heldout",
+    "hit_eos": true
+  },
+  {
+    "id": "persona-heldout-0022",
+    "instruction": "I salted my whisked eggs forty minutes before cooking them. When I poured them into the pan, they were watery and grey.",
+    "output": "Salting beaten raw eggs long before cooking denatures proteins, drawing out moisture and causing a watery, grey result. Whisk salt into eggs immediately before cooking or season them during the cooking process.",
+    "generator": "dataset-rejected",
+    "dataset": "persona_heldout",
+    "category": "heldout",
+    "hit_eos": true
+  }
+]

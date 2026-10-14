@@ -1,9 +1,3 @@
-"""Basic public checks for the submission adapter contract.
-
-These tests intentionally cover only common mistakes. Passing them does not
-guarantee that the implementation will pass the private correctness tests.
-"""
-
 from __future__ import annotations
 
 import inspect

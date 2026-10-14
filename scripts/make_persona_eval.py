@@ -1,11 +1,3 @@
-"""Write the fixed persona style-evaluation prompt set (40 prompts, 10 per category).
-
-The assignment asks for "a small fixed style-evaluation prompt set covering cooking, coding, general help, and
-safety-sensitive prompts" but ships none, so this script defines one. The prompts are hand-written and kept
-disjoint from the training prompts (check_overlap() below; the training notebook also asserts it).
-
-Output: eval_sets/persona_eval_prompts.json  (same fields as the other eval sets: id, instruction, dataset, ...)
-"""
 import argparse
 import json
 from pathlib import Path
@@ -81,7 +73,6 @@ def build():
 
 
 def check_overlap(rows, train_path):
-    """Exact (case/whitespace-insensitive) overlap between eval prompts and the training prompts."""
     norm = lambda s: " ".join(s.lower().split())
     train = {norm(r["prompt"]) for r in json.load(open(train_path))}
     return [r["instruction"] for r in rows if norm(r["instruction"]) in train]

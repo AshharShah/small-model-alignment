@@ -1,10 +1,3 @@
-"""Build single-turn SFT train/validation files from UltraChat-200k.
-
-Each conversation is reduced to its first (user, assistant) exchange. Examples are
-shuffled with a fixed seed and kept only if the formatted prompt + response + EOS
-fits in --max_length tokens, so every training example keeps its EOS label.
-Output: <out_dir>/sft_train.jsonl, sft_val.jsonl, sft_data_manifest.json
-"""
 import argparse
 import hashlib
 import json
@@ -25,7 +18,6 @@ def first_exchange(example):
 
 
 def collect(rows, tokenizer, n, max_length, stats):
-    """rows: iterable of dataset examples, already shuffled."""
     kept = []
     for ex in rows:
         stats["seen"] += 1
@@ -35,7 +27,7 @@ def collect(rows, tokenizer, n, max_length, stats):
             continue
         instruction, response = pair
         n_prompt = len(tokenizer.encode(format_prompt(instruction), add_special_tokens=False))
-        n_resp = len(tokenizer.encode(response, add_special_tokens=False)) + 1  # + EOS
+        n_resp = len(tokenizer.encode(response, add_special_tokens=False)) + 1
         if n_prompt + n_resp > max_length:
             stats["skipped_too_long"] += 1
             continue

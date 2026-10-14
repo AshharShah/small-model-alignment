@@ -1,6 +1,3 @@
-"""Tests for scripts/judge_pairwise_kaggle.py and scripts/summarize_judgments.py using scripted fake judges
-(no network, no Kaggle library)."""
-
 from __future__ import annotations
 
 import json
@@ -11,9 +8,9 @@ from pathlib import Path
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-import build_pairs as bp  # noqa: E402
-import judge_pairwise_kaggle as jp  # noqa: E402
-import summarize_judgments as sj  # noqa: E402
+import build_pairs as bp
+import judge_pairwise_kaggle as jp
+import summarize_judgments as sj
 
 
 def make_pairs(n=12, identical=()):
@@ -25,7 +22,6 @@ def make_pairs(n=12, identical=()):
 
 
 def scripted(winner_of=lambda pid: "A"):
-    """A fake judge that answers every pair id found in the prompt, and records every prompt it was sent."""
     prompts = []
 
     def judge(prompt):
@@ -44,7 +40,6 @@ def run(pairs, judge, tmp_path, **kw):
     return stats, sleeps, out, fail
 
 
-# ---------------------------------------------------------------- prompt
 def test_prompt_contains_only_judge_facing_fields_and_no_identity():
     pairs = make_pairs(5)
     prompt = jp.build_prompt(pairs, "general")
@@ -61,7 +56,7 @@ def test_swap_exchanges_the_displayed_positions_and_rubrics_differ():
     assert a_block(normal) == p[0]["response_a"] and a_block(swapped) == p[0]["response_b"]
     assert "refusal" in jp.build_prompt(p, "safety") and "refusal" not in jp.build_prompt(p, "general")
     assert "persona" in jp.build_prompt(p, "persona_style") and "persona" not in jp.build_prompt(p, "persona_safety")
-    assert "longer" in jp.build_prompt(p, "general")        # the anti-verbosity instruction is present
+    assert "longer" in jp.build_prompt(p, "general")
 
 
 def test_plain_rubrics_drop_the_extra_guidance_but_keep_the_criteria_and_safety_text():
@@ -74,7 +69,6 @@ def test_plain_rubrics_drop_the_extra_guidance_but_keep_the_criteria_and_safety_
     assert jp.SAFETY_ADDENDUM in jp.RUBRICS["safety"] and jp.SAFETY_ADDENDUM in jp.RUBRICS["safety_plain"]
 
 
-# ---------------------------------------------------------------- parsing
 IDS = {"a", "b", "c"}
 
 
@@ -93,27 +87,25 @@ def test_parse_rejects_invalid_winners_unknown_ids_duplicates_and_garbage():
         assert jp.parse_verdicts(bad, IDS) == {}
 
 
-# ---------------------------------------------------------------- mapping back to identity
 @pytest.mark.parametrize("test_is_a", [True, False])
 @pytest.mark.parametrize("swap", [False, True])
 def test_mapping_back_to_model_identity(test_is_a, swap):
     row = {"_meta": {"a_model": "T" if test_is_a else "R", "b_model": "R" if test_is_a else "T", "test_is_a": test_is_a}}
     for shown in ("A", "B"):
-        original = shown if not swap else ("B" if shown == "A" else "A")        # which ORIGINAL response was picked
+        original = shown if not swap else ("B" if shown == "A" else "A")
         expected_model = row["_meta"]["a_model"] if original == "A" else row["_meta"]["b_model"]
         model, outcome = jp.map_verdict(row, shown, swap)
         assert model == expected_model and outcome == ("test_win" if model == "T" else "ref_win")
     assert jp.map_verdict(row, "TIE", swap) == ("tie", "tie")
 
 
-# ---------------------------------------------------------------- the batch job
 def test_batches_of_five_with_sleep_between_calls_and_isolated_prompts(tmp_path):
     pairs = make_pairs(12)
     judge = scripted()
     stats, sleeps, out, fail = run(pairs, judge, tmp_path, batch_size=5, sleep_seconds=5.0, max_retries=3, reuse=False)
     assert [p.count("### Comparison") for p in judge.prompts] == [5, 5, 2]
     assert (stats["batches_run"], stats["failed_batches"], stats["judge_calls"]) == (3, 0, 3)
-    assert sleeps == [5.0, 5.0]                                  # a pause before every call except the first
+    assert sleeps == [5.0, 5.0]
     assert all("SECRETNAME" not in p for p in judge.prompts)
     recs = jp.read_jsonl(out)
     assert len(recs) == 12 and all(r["outcome"] in ("test_win", "ref_win") for r in recs)
@@ -150,7 +142,7 @@ def test_only_missing_verdicts_are_requested_again(tmp_path):
 
 def test_exhausted_retries_log_failure_mark_unknown_and_resume_retries_only_those(tmp_path):
     pairs = make_pairs(10)
-    bad_ids = {p["pair_id"] for p in pairs[5:]}                  # the whole second batch always fails
+    bad_ids = {p["pair_id"] for p in pairs[5:]}
 
     def judge(prompt):
         ids = re.findall(r"pair_id=(\S+)", prompt)
@@ -159,13 +151,13 @@ def test_exhausted_retries_log_failure_mark_unknown_and_resume_retries_only_thos
         return scripted()(prompt)
     stats, _, out, fail = run(pairs, judge, tmp_path, batch_size=5, sleep_seconds=0.0, max_retries=3, reuse=False,
                               split_failed=False)
-    assert stats["failed_batches"] == 1 and stats["judge_calls"] == 4              # 1 good call + 3 failed attempts
+    assert stats["failed_batches"] == 1 and stats["judge_calls"] == 4
     failures = jp.read_jsonl(fail)
     assert len(failures) == 1 and set(failures[0]["pair_ids"]) == bad_ids and failures[0]["attempts"] == 3
     summary = jp.summarize(out, pairs, stats)
     assert summary["unknown"] == 5 and summary["unknown_rate"] == 0.5 and summary["batch_failure_rate"] == 0.5
 
-    judge2 = scripted()                                                             # rerun with a healthy judge
+    judge2 = scripted()
     stats2, _, out2, _ = run(pairs, judge2, tmp_path, batch_size=5, sleep_seconds=0.0, max_retries=3, reuse=True,
                              split_failed=False)
     assert stats2["judge_calls"] == 1 and len(judge2.prompts) == 1 and judge2.prompts[0].count("### Comparison") == 5
@@ -200,7 +192,6 @@ def test_identical_pairs_are_auto_ties_and_not_sent_to_the_judge(tmp_path):
 
 
 def test_swap_run_maps_back_to_the_same_underlying_response(tmp_path):
-    """A judge that always prefers whatever text contains 'TESTTEXT' must give 'test_win' with and without swap."""
     pairs = make_pairs(6)
 
     def prefers_test(prompt):
@@ -222,14 +213,14 @@ def test_one_poison_pair_is_isolated_instead_of_losing_the_whole_batch(tmp_path)
     poison = pairs[2]["pair_id"]
     prompts = []
 
-    def judge(prompt):                                    # the judge cannot process any request containing the poison pair
+    def judge(prompt):
         prompts.append(prompt)
         if f"pair_id={poison}" in prompt:
             raise RuntimeError("content blocked")
         return scripted()(prompt)
     stats, sleeps, out, fail = run(pairs, judge, tmp_path, batch_size=5, sleep_seconds=5.0, max_retries=3, reuse=False)
     assert stats["failed_batches"] == 1 and stats["batches_split_after_failure"] == 1
-    assert stats["judge_calls"] == 3 + 4 + 3                      # batch x3, four clean singles, poison single x3
+    assert stats["judge_calls"] == 3 + 4 + 3
     failures = jp.read_jsonl(fail)
     assert len(failures) == 1 and failures[0]["pair_ids"] == [poison]
     final = jp.summarize(out, pairs, stats)
@@ -248,7 +239,7 @@ def test_failure_log_keeps_the_raw_reply_of_the_pair_that_failed(tmp_path):
         return "BLOCKED-BY-POLICY" if f"pair_id={poison}" in prompt else inner(prompt)
     _, _, _, fail = run(pairs, judge, tmp_path, batch_size=5, sleep_seconds=0.0, max_retries=2, reuse=False)
     rec = jp.read_jsonl(fail)[0]
-    assert rec["pair_ids"] == [poison] and rec["last_raw_response"] == "BLOCKED-BY-POLICY"   # not a later success
+    assert rec["pair_ids"] == [poison] and rec["last_raw_response"] == "BLOCKED-BY-POLICY"
     assert any(e.startswith(f"{poison}:") for e in rec["errors"])
 
 
@@ -261,7 +252,6 @@ def test_split_can_be_disabled(tmp_path):
     assert len(jp.read_jsonl(fail)) == 1
 
 
-# ---------------------------------------------------------------- statistics
 def test_wilson_and_sign_test_known_values():
     lo, hi = sj.wilson(5, 10)
     assert abs(lo - 0.2366) < 1e-3 and abs(hi - 0.7634) < 1e-3

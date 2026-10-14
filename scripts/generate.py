@@ -1,9 +1,3 @@
-"""Generate responses on a fixed prompt file (greedy by default).
-
-Writes a JSON list (id, instruction, output, generator, dataset + extras) and a
-<output>.meta.json with the exact settings. Resumable via <output>.partial.jsonl
-(delete the partial file if you change any decoding setting).
-"""
 import argparse
 import json
 import statistics
@@ -57,7 +51,7 @@ def main():
         print(f"resuming: {len(done)} prompts already done")
 
     tok = AutoTokenizer.from_pretrained(args.tokenizer_path or args.model_path)
-    tok.padding_side = "left"  # required for batched decoder-only generation
+    tok.padding_side = "left"
     if tok.pad_token_id is None:
         tok.pad_token = tok.eos_token
     model = AutoModelForCausalLM.from_pretrained(args.model_path, torch_dtype=torch.float16)
@@ -67,7 +61,6 @@ def main():
     plen = {pid: len(tok(t).input_ids) for pid, t in texts.items()}
     print(f"prompt tokens: max={max(plen.values())}, prompts > 256 tokens: {sum(v > 256 for v in plen.values())}")
 
-    # longest first; ties broken by id, so batch composition depends only on the prompt set
     todo = sorted((p for p in prompts if p["id"] not in done), key=lambda p: (-plen[p["id"]], p["id"]))
 
     gen_kwargs = dict(
@@ -90,7 +83,7 @@ def main():
             new_tokens = out[:, enc["input_ids"].shape[1] :]
             for p, ids in zip(batch, new_tokens):
                 ids = ids.tolist()
-                hit_eos = tok.eos_token_id in ids  # pad == eos for Qwen, so cut at the first one
+                hit_eos = tok.eos_token_id in ids
                 if hit_eos:
                     ids = ids[: ids.index(tok.eos_token_id)]
                 rec = {
@@ -108,7 +101,7 @@ def main():
             pf.flush()
             print(f"[{min(b + args.batch_size, len(todo))}/{len(todo)}] {time.time() - t0:.0f}s", flush=True)
 
-    results = [done[p["id"]] for p in prompts]  # original prompt order
+    results = [done[p["id"]] for p in prompts]
     with open(out_path, "w") as f:
         json.dump(results, f, ensure_ascii=False, indent=2)
 

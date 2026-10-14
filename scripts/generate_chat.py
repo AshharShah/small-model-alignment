@@ -1,9 +1,3 @@
-"""Generate responses from a chat model (optionally with a LoRA adapter) using its own chat template.
-
-Greedy decoding by default. The same script and settings are used for the base model and the adapter so the
-two are compared fairly. Writes a JSON list (id, instruction, output, generator, dataset, + extras) and a
-<output>.meta.json with the exact settings.
-"""
 import argparse
 import json
 import statistics
@@ -64,7 +58,7 @@ def main():
     for b in range(0, len(prompts), args.batch_size):
         enc = tok(texts[b : b + args.batch_size], return_tensors="pt", padding=True,
                   add_special_tokens=False).to(args.device)
-        enc.pop("token_type_ids", None)  # some tokenizers emit it; causal LMs do not accept it
+        enc.pop("token_type_ids", None)
         with torch.inference_mode():
             out = model.generate(**enc, do_sample=False, max_new_tokens=args.max_new_tokens,
                                  repetition_penalty=args.repetition_penalty,

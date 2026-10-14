@@ -1,5 +1,3 @@
-"""Small offline tokenizer and causal LM used by the public adapter tests."""
-
 from __future__ import annotations
 
 from types import SimpleNamespace
@@ -78,8 +76,6 @@ class ToyTokenizer:
 
 
 class ToyCausalLM(nn.Module):
-    """Causal LM with trainable token logits independent of input position."""
-
     def __init__(self, vocab_size, bias_scale=0.0):
         super().__init__()
         initial_bias = torch.linspace(-0.3, 0.3, vocab_size) * bias_scale

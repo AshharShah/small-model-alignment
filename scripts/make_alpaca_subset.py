@@ -1,4 +1,3 @@
-"""Create the fixed AlpacaEval evaluation subset (default: 300 prompts, seed 42)."""
 import argparse
 import hashlib
 import json

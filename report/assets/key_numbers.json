@@ -1,0 +1,196 @@
+{
+  "sft": {
+    "val_loss_step0": 1.3498745320280463,
+    "val_loss_final": 1.3234732576626116,
+    "val_loss_min": 1.3234732576626116,
+    "steps": 937
+  },
+  "dpo_hh": {
+    "val_acc_step0": 0.08300000429153442,
+    "val_acc_final": 0.6360000371932983,
+    "val_acc_best": 0.6440000534057617,
+    "val_margin_final": 0.24764472246170044,
+    "val_loss_final": 0.6301820278167725,
+    "max_abs_reward_step0": 2.441406286379788e-05
+  },
+  "dpo_uf": {
+    "val_acc_step0": 0.26500001549720764,
+    "val_acc_final": 0.706000030040741,
+    "val_acc_best": 0.706000030040741,
+    "val_margin_final": 0.634911060333252,
+    "val_loss_final": 0.5603647232055664,
+    "max_abs_reward_step0": 4.272460864740424e-05
+  },
+  "generation": {
+    "Qwen2.5-0.5B base | AlpacaEval-300": {
+      "EOS": 206,
+      "cap": 94,
+      "mean": 268,
+      "median": 224,
+      "loops": 130,
+      "n": 300
+    },
+    "SFT | AlpacaEval-300": {
+      "EOS": 256,
+      "cap": 44,
+      "mean": 201,
+      "median": 152,
+      "loops": 123,
+      "n": 300
+    },
+    "DPO-UF | AlpacaEval-300": {
+      "EOS": 229,
+      "cap": 71,
+      "mean": 299,
+      "median": 302,
+      "loops": 177,
+      "n": 300
+    },
+    "DPO-HH | AlpacaEval-300": {
+      "EOS": 260,
+      "cap": 40,
+      "mean": 181,
+      "median": 128,
+      "loops": 110,
+      "n": 300
+    },
+    "SFT | HH-eval-300": {
+      "EOS": 255,
+      "cap": 45,
+      "mean": 237,
+      "median": 227,
+      "loops": 150,
+      "n": 300
+    },
+    "DPO-HH | HH-eval-300": {
+      "EOS": 268,
+      "cap": 32,
+      "mean": 190,
+      "median": 165,
+      "loops": 133,
+      "n": 300
+    },
+    "DPO-UF | HH-eval-300": {
+      "EOS": 222,
+      "cap": 78,
+      "mean": 309,
+      "median": 320,
+      "loops": 176,
+      "n": 300
+    },
+    "SmolLM2 base | persona-40": {
+      "EOS": 37,
+      "cap": 3,
+      "mean": 280,
+      "median": 307,
+      "loops": 11,
+      "n": 40
+    },
+    "LoRA r16 lr5e-5 | persona-40": {
+      "EOS": 40,
+      "cap": 0,
+      "mean": 253,
+      "median": 280,
+      "loops": 11,
+      "n": 40
+    }
+  },
+  "judge": {
+    "dpo_uf_vs_sft_alpaca300": {
+      "wins": "94",
+      "ties": "60",
+      "losses": "146",
+      "unknown": "0",
+      "win_rate_excl_ties": "0.3917",
+      "sign_test_p": "0.001"
+    },
+    "dpo_hh_vs_sft_hh300": {
+      "wins": "137",
+      "ties": "70",
+      "losses": "93",
+      "unknown": "0",
+      "win_rate_excl_ties": "0.5957",
+      "sign_test_p": "0.0045"
+    },
+    "dpo_hh_vs_sft_alpaca300": {
+      "wins": "102",
+      "ties": "93",
+      "losses": "105",
+      "unknown": "0",
+      "win_rate_excl_ties": "0.4928",
+      "sign_test_p": "0.8895"
+    },
+    "dpo_uf_vs_sft_hh300": {
+      "wins": "96",
+      "ties": "68",
+      "losses": "134",
+      "unknown": "2",
+      "win_rate_excl_ties": "0.4174",
+      "sign_test_p": "0.0145"
+    },
+    "lora_vs_base_persona40_style": {
+      "wins": "0",
+      "ties": "40",
+      "losses": "0",
+      "unknown": "0",
+      "win_rate_excl_ties": "",
+      "sign_test_p": ""
+    },
+    "lora_vs_base_persona40_useful": {
+      "wins": "15",
+      "ties": "10",
+      "losses": "15",
+      "unknown": "0",
+      "win_rate_excl_ties": "0.5",
+      "sign_test_p": "1.0"
+    },
+    "lora_vs_base_persona40_safety": {
+      "wins": "3",
+      "ties": "32",
+      "losses": "5",
+      "unknown": "0",
+      "win_rate_excl_ties": "0.375",
+      "sign_test_p": "0.7266"
+    },
+    "dpo_uf_vs_sft_alpaca300_swapped": {
+      "wins": "94",
+      "ties": "75",
+      "losses": "131",
+      "unknown": "0",
+      "win_rate_excl_ties": "0.4178",
+      "sign_test_p": "0.0162"
+    },
+    "dpo_hh_vs_sft_hh300_swapped": {
+      "wins": "147",
+      "ties": "60",
+      "losses": "93",
+      "unknown": "0",
+      "win_rate_excl_ties": "0.6125",
+      "sign_test_p": "0.0006"
+    },
+    "dpo_uf_vs_sft_alpaca300_plainrubric": {
+      "wins": "97",
+      "ties": "65",
+      "losses": "138",
+      "unknown": "0",
+      "win_rate_excl_ties": "0.4128",
+      "sign_test_p": "0.0089"
+    },
+    "dpo_hh_vs_sft_hh300_plainrubric": {
+      "wins": "134",
+      "ties": "68",
+      "losses": "97",
+      "unknown": "1",
+      "win_rate_excl_ties": "0.5801",
+      "sign_test_p": "0.0177"
+    },
+    "control_lr1e-4_vs_base_persona40_style": {
+      "wins": "2",
+      "ties": "38",
+      "losses": "0",
+      "unknown": "0",
+      "win_rate_excl_ties": "1.0",
+      "sign_test_p": "0.5"
+    }
+  }
+}

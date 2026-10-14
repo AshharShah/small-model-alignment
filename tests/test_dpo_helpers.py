@@ -1,8 +1,3 @@
-"""Tests for the DPO plumbing (pair concatenation, rewards) and the preference-data parsers.
-
-Offline: toy tokenizer/model only; the data tests never touch the network.
-"""
-
 from __future__ import annotations
 
 import sys
@@ -10,17 +5,16 @@ from pathlib import Path
 
 import torch
 
-import submission_adapter as adapter  # noqa: F401  (puts src/ on sys.path)
+import submission_adapter as adapter
 from alignment.batching import build_dpo_batch
 from alignment.dpo import concat_pair_batches, dpo_rewards, split_pair
 from alignment.objectives import batch_response_logps, compute_dpo_loss_from_logps, compute_response_logprobs
 from tests.toy_lm import ToyCausalLM, ToyTokenizer
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-import build_dpo_data as bdd  # noqa: E402
+import build_dpo_data as bdd
 
 
-# ---------------------------------------------------------------- pair plumbing
 def test_concat_pair_logps_match_separate_scoring_and_keep_order():
     tok = ToyTokenizer()
     model = ToyCausalLM(tok.vocab_size, bias_scale=0.9)
@@ -48,7 +42,7 @@ def test_rewards_are_zero_for_identical_models_and_accuracy_is_strict():
     pc, pr = torch.tensor([-5.0, -7.0]), torch.tensor([-6.0, -8.0])
     r_w, r_l = dpo_rewards(pc, pr, pc, pr, beta=0.1)
     assert torch.equal(r_w, torch.zeros(2)) and torch.equal(r_l, torch.zeros(2))
-    assert (r_w > r_l).float().mean().item() == 0.0  # ties are not wins: initial accuracy is exactly 0
+    assert (r_w > r_l).float().mean().item() == 0.0
     assert abs(compute_dpo_loss_from_logps(pc, pr, pc, pr, 0.1).item() - 0.6931471805599453) < 1e-6
 
 
@@ -61,7 +55,6 @@ def test_rewards_scale_with_beta_and_match_the_loss_argument():
     torch.testing.assert_close(compute_dpo_loss_from_logps(pc, pr, rc, rr, 0.5), expected)
 
 
-# ---------------------------------------------------------------- HH-RLHF parsing
 def _hh(chosen, rejected):
     return {"chosen": chosen, "rejected": rejected}
 
@@ -72,7 +65,7 @@ def test_hh_single_turn_is_parsed_and_multi_turn_is_rejected():
     assert ok == ("How are you?", "Fine, thanks.", "Go away.")
     multi = "\n\nHuman: Hi\n\nAssistant: Hello\n\nHuman: And?\n\nAssistant: Yes."
     assert bdd.parse_hh(_hh(multi, multi)) == "not_single_turn"
-    assert bdd.parse_hh(_hh("\n\nHuman: Hi", "\n\nHuman: Hi")) == "not_single_turn"  # no assistant turn
+    assert bdd.parse_hh(_hh("\n\nHuman: Hi", "\n\nHuman: Hi")) == "not_single_turn"
 
 
 def test_hh_prompt_mismatch_and_bad_order_are_rejected():
@@ -80,7 +73,6 @@ def test_hh_prompt_mismatch_and_bad_order_are_rejected():
     assert bdd.parse_hh(_hh("\n\nAssistant: x\n\nHuman: A", "\n\nAssistant: x\n\nHuman: A")) == "bad_format"
 
 
-# ---------------------------------------------------------------- UltraFeedback parsing
 def _uf(prompt="Say hi", chosen="Hello there", rejected="no", sc=8.0, sr=5.0, extra=False):
     msgs = lambda a: [{"role": "user", "content": prompt}, {"role": "assistant", "content": a}]
     c = msgs(chosen) + ([{"role": "user", "content": "more"}] if extra else [])
@@ -94,10 +86,7 @@ def test_uf_parse_keeps_valid_pairs_and_drops_ties_reversals_and_multi_turn():
     assert bdd.parse_uf(_uf(extra=True)) == "not_single_turn"
 
 
-# ---------------------------------------------------------------- collect() filters
 class LenientTokenizer(ToyTokenizer):
-    """The toy vocabulary has no '#' or newline, which the real prompt template contains."""
-
     def encode(self, text, add_special_tokens=False):
         return [self.vocab.get(c, 2) for c in text]
 
@@ -119,7 +108,7 @@ def test_collect_applies_length_filters_and_stops_at_n_and_can_resume():
     for r in kept:
         assert r["prompt_tokens"] <= 60 and r["prompt_tokens"] + max(r["chosen_tokens"], r["rejected_tokens"]) <= 100
 
-    it = iter(rows)  # an iterator resumes where the previous call stopped (used for the validation top-up)
+    it = iter(rows)
     s1, s2 = {"seen": 0}, {"seen": 0}
     first = bdd.collect(it, bdd.parse_hh, tok, n=1, max_length=100, max_prompt_length=60, stats=s1)
     second = bdd.collect(it, bdd.parse_hh, tok, n=1, max_length=100, max_prompt_length=60, stats=s2)

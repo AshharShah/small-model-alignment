@@ -1,6 +1,3 @@
-"""Tests for scripts/build_pairs.py: balanced seeded A/B assignment, a correct hidden mapping, and no model
-identity anywhere in the judge-facing fields."""
-
 from __future__ import annotations
 
 import json
@@ -10,7 +7,7 @@ from pathlib import Path
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-import build_pairs as bp  # noqa: E402
+import build_pairs as bp
 
 JUDGE_FIELDS = ("pair_id", "id", "instruction", "response_a", "response_b")
 
@@ -25,14 +22,14 @@ def test_assignment_is_balanced_seeded_and_mapping_is_correct():
     test, ref = _gens("TESTOUT"), _gens("REFOUT")
     rows = bp.build_pairs(test, ref, "dpo_hh", "sft", seed=42)
     assert len(rows) == 20
-    assert sum(r["_meta"]["test_is_a"] for r in rows) == 10          # exactly half in position A
+    assert sum(r["_meta"]["test_is_a"] for r in rows) == 10
     for r, t, f in zip(rows, test, ref):
         m = r["_meta"]
         want_a, want_b = (t["output"], f["output"]) if m["test_is_a"] else (f["output"], t["output"])
         assert (r["response_a"], r["response_b"]) == (want_a, want_b)
         assert {m["a_model"], m["b_model"]} == {"dpo_hh", "sft"} and m["a_model"] != m["b_model"]
         assert (m["a_model"] == "dpo_hh") == m["test_is_a"]
-    assert rows == bp.build_pairs(test, ref, "dpo_hh", "sft", seed=42)                       # deterministic
+    assert rows == bp.build_pairs(test, ref, "dpo_hh", "sft", seed=42)
     other = bp.build_pairs(test, ref, "dpo_hh", "sft", seed=7)
     assert [r["_meta"]["test_is_a"] for r in rows] != [r["_meta"]["test_is_a"] for r in other]
 
@@ -47,7 +44,7 @@ def test_judge_facing_fields_never_contain_model_identity():
     for r in rows:
         visible = json.dumps({k: r[k] for k in JUDGE_FIELDS})
         assert "SECRETNAME" not in visible and "gen-" not in visible
-        assert set(r) == set(JUDGE_FIELDS) | {"_meta"}                                         # nothing else leaks
+        assert set(r) == set(JUDGE_FIELDS) | {"_meta"}
         assert r["pair_id"].startswith("hh-")
 
 
@@ -61,7 +58,7 @@ def test_mismatched_ids_or_instructions_are_rejected():
 
 
 def test_identical_outputs_truncation_and_leak_scan_are_reported():
-    test = _gens("t"); ref = _gens("r", same_as=test)                                          # every 5th output identical
+    test = _gens("t"); ref = _gens("r", same_as=test)
     ref[1]["output"] = "As SFT trained on Qwen, I think so."
     rows = bp.build_pairs(test, ref, "dpo", "sft")
     s = bp.summarize(rows, "dpo", "sft")

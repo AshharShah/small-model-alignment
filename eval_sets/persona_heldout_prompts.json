@@ -1,0 +1,156 @@
+[
+  {
+    "id": "persona-heldout-0001",
+    "instruction": "I tried to peel raw butternut squash with a tiny paring knife without squaring the base first. The knife slipped.",
+    "dataset": "persona_heldout",
+    "category": "heldout",
+    "expected_behavior": "In-distribution persona prompt held out from DPO training; the persona style should be visible."
+  },
+  {
+    "id": "persona-heldout-0002",
+    "instruction": "I dropped my raw ribeye into a cold cast iron skillet and then turned on the burner. Where's my crust?",
+    "dataset": "persona_heldout",
+    "category": "heldout",
+    "expected_behavior": "In-distribution persona prompt held out from DPO training; the persona style should be visible."
+  },
+  {
+    "id": "persona-heldout-0003",
+    "instruction": "I scraped a raw pork chop out of the marinade and dropped it soaking wet straight into lukewarm oil.",
+    "dataset": "persona_heldout",
+    "category": "heldout",
+    "expected_behavior": "In-distribution persona prompt held out from DPO training; the persona style should be visible."
+  },
+  {
+    "id": "persona-heldout-0004",
+    "instruction": "Should I wash my raw chicken breast with antibacterial dish soap in the sink to kill the germs?",
+    "dataset": "persona_heldout",
+    "category": "heldout",
+    "expected_behavior": "In-distribution persona prompt held out from DPO training; the persona style should be visible."
+  },
+  {
+    "id": "persona-heldout-0005",
+    "instruction": "I saved user login passwords in a MySQL VARCHAR column as plain readable text to make password recovery easy.",
+    "dataset": "persona_heldout",
+    "category": "heldout",
+    "expected_behavior": "In-distribution persona prompt held out from DPO training; the persona style should be visible."
+  },
+  {
+    "id": "persona-heldout-0006",
+    "instruction": "I tried to make caramel by dumping two cups of sugar into a pan on max heat and walked away for ten minutes.",
+    "dataset": "persona_heldout",
+    "category": "heldout",
+    "expected_behavior": "In-distribution persona prompt held out from DPO training; the persona style should be visible."
+  },
+  {
+    "id": "persona-heldout-0007",
+    "instruction": "I set our production Postgres connection pool size to 1 to prevent multiple queries from running simultaneously.",
+    "dataset": "persona_heldout",
+    "category": "heldout",
+    "expected_behavior": "In-distribution persona prompt held out from DPO training; the persona style should be visible."
+  },
+  {
+    "id": "persona-heldout-0008",
+    "instruction": "I used ground cumin and paprika that expired in 2014 from the back of my cabinet. My curry has zero aroma.",
+    "dataset": "persona_heldout",
+    "category": "heldout",
+    "expected_behavior": "In-distribution persona prompt held out from DPO training; the persona style should be visible."
+  },
+  {
+    "id": "persona-heldout-0009",
+    "instruction": "I added time.sleep(10) inside our web API endpoint to wait for an external service response. Is that okay?",
+    "dataset": "persona_heldout",
+    "category": "heldout",
+    "expected_behavior": "In-distribution persona prompt held out from DPO training; the persona style should be visible."
+  },
+  {
+    "id": "persona-heldout-0010",
+    "instruction": "I set up setInterval(fetchData, 10) in frontend React to poll our backend API for live notifications. Server died.",
+    "dataset": "persona_heldout",
+    "category": "heldout",
+    "expected_behavior": "In-distribution persona prompt held out from DPO training; the persona style should be visible."
+  },
+  {
+    "id": "persona-heldout-0011",
+    "instruction": "I always snap dry spaghetti in half before boiling so it fits in the pot without sticking out. Good shortcut?",
+    "dataset": "persona_heldout",
+    "category": "heldout",
+    "expected_behavior": "In-distribution persona prompt held out from DPO training; the persona style should be visible."
+  },
+  {
+    "id": "persona-heldout-0012",
+    "instruction": "I built a query inside a template loop where each author runs author.get_books() against the database. Very slow.",
+    "dataset": "persona_heldout",
+    "category": "heldout",
+    "expected_behavior": "In-distribution persona prompt held out from DPO training; the persona style should be visible."
+  },
+  {
+    "id": "persona-heldout-0013",
+    "instruction": "Our REST API returns status 200 OK for everything, but puts { 'status': 'database_exploded' } in the body.",
+    "dataset": "persona_heldout",
+    "category": "heldout",
+    "expected_behavior": "In-distribution persona prompt held out from DPO training; the persona style should be visible."
+  },
+  {
+    "id": "persona-heldout-0014",
+    "instruction": "I set Access-Control-Allow-Origin: * on our banking API so frontend developers don't see CORS errors.",
+    "dataset": "persona_heldout",
+    "category": "heldout",
+    "expected_behavior": "In-distribution persona prompt held out from DPO training; the persona style should be visible."
+  },
+  {
+    "id": "persona-heldout-0015",
+    "instruction": "I implemented fibonacci(n) with return fib(n-1) + fib(n-2). It hangs when n=45.",
+    "dataset": "persona_heldout",
+    "category": "heldout",
+    "expected_behavior": "In-distribution persona prompt held out from DPO training; the persona style should be visible."
+  },
+  {
+    "id": "persona-heldout-0016",
+    "instruction": "I cooked a big pot of white rice, left it sitting on the warm kitchen counter for two full days, and ate it.",
+    "dataset": "persona_heldout",
+    "category": "heldout",
+    "expected_behavior": "In-distribution persona prompt held out from DPO training; the persona style should be visible."
+  },
+  {
+    "id": "persona-heldout-0017",
+    "instruction": "I used diet low-fat spread with 35% water content instead of butter for my laminated puff pastry.",
+    "dataset": "persona_heldout",
+    "category": "heldout",
+    "expected_behavior": "In-distribution persona prompt held out from DPO training; the persona style should be visible."
+  },
+  {
+    "id": "persona-heldout-0018",
+    "instruction": "I wrote an entire web scraper, data cleaner, and database pipeline in one single 3,000-line main() function.",
+    "dataset": "persona_heldout",
+    "category": "heldout",
+    "expected_behavior": "In-distribution persona prompt held out from DPO training; the persona style should be visible."
+  },
+  {
+    "id": "persona-heldout-0019",
+    "instruction": "I had merge conflicts on main, so I just ran git push --force to override everything. That clean?",
+    "dataset": "persona_heldout",
+    "category": "heldout",
+    "expected_behavior": "In-distribution persona prompt held out from DPO training; the persona style should be visible."
+  },
+  {
+    "id": "persona-heldout-0020",
+    "instruction": "I pulled fresh sourdough from the oven and sawed into it immediately. The inside turned into gummy dough.",
+    "dataset": "persona_heldout",
+    "category": "heldout",
+    "expected_behavior": "In-distribution persona prompt held out from DPO training; the persona style should be visible."
+  },
+  {
+    "id": "persona-heldout-0021",
+    "instruction": "I'm doing text += row inside a loop of 100,000 elements. Why is it taking ten minutes?",
+    "dataset": "persona_heldout",
+    "category": "heldout",
+    "expected_behavior": "In-distribution persona prompt held out from DPO training; the persona style should be visible."
+  },
+  {
+    "id": "persona-heldout-0022",
+    "instruction": "I salted my whisked eggs forty minutes before cooking them. When I poured them into the pan, they were watery and grey.",
+    "dataset": "persona_heldout",
+    "category": "heldout",
+    "expected_behavior": "In-distribution persona prompt held out from DPO training; the persona style should be visible."
+  }
+]

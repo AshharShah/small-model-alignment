@@ -1,11 +1,3 @@
-"""Response-only log-probabilities and the SFT / DPO objectives.
-
-SFT loss reduction (document this in the report):
-    mean over ALL unmasked response tokens in the batch,
-    i.e.  -sum_i logp_i / max(1, #response tokens),
-    where a token counts only if it can be predicted (labels[:, 1:] != -100).
-"""
-
 from __future__ import annotations
 
 import torch
@@ -19,24 +11,16 @@ def model_device(model) -> torch.device:
 
 
 def response_token_mask(labels: torch.Tensor) -> torch.Tensor:
-    """[B, T-1] bool mask of predictable response positions (labels shifted by one)."""
     return labels[:, 1:].ne(IGNORE_INDEX)
 
 
 def sequence_logps_from_logits(logits: torch.Tensor, labels: torch.Tensor) -> torch.Tensor:
-    """Sum of response-token log-probs per row, shape [B], float32, differentiable.
-
-    Position t of ``logits`` predicts token t+1, so logits[:, :-1] is scored against
-    labels[:, 1:]. Prompt and padding positions (label -100) contribute nothing.
-    Only the selected positions are upcast to float32, which saves memory with a
-    151k-token vocabulary.
-    """
     batch_size = labels.shape[0]
     targets = labels[:, 1:]
     mask = targets.ne(IGNORE_INDEX)
 
-    selected = logits[:, :-1, :][mask].float()  # [N, V]
-    token_targets = targets[mask]  # [N]
+    selected = logits[:, :-1, :][mask].float()
+    token_targets = targets[mask]
     token_logps = selected.gather(-1, token_targets.unsqueeze(-1)).squeeze(-1) - torch.logsumexp(selected, dim=-1)
 
     row_index = torch.arange(batch_size, device=labels.device).unsqueeze(1).expand_as(mask)[mask]
@@ -45,7 +29,6 @@ def sequence_logps_from_logits(logits: torch.Tensor, labels: torch.Tensor) -> to
 
 
 def sft_loss_from_logits(logits: torch.Tensor, labels: torch.Tensor) -> torch.Tensor:
-    """Scalar SFT loss: token-mean negative log-likelihood over response tokens."""
     logps = sequence_logps_from_logits(logits, labels)
     count = response_token_mask(labels).sum().clamp_min(1)
     return -logps.sum() / count
@@ -66,7 +49,6 @@ def batch_response_logps(model, batch) -> torch.Tensor:
 
 
 def compute_response_logprobs(model, tokenizer, prompts, responses, max_length):
-    """One summed response-token log-prob per row, shape [B]."""
     batch = build_sft_batch(tokenizer, prompts, responses, max_length)
     return batch_response_logps(model, batch)
 
@@ -82,7 +64,6 @@ def _upcast(x: torch.Tensor) -> torch.Tensor:
 
 
 def dpo_logits(policy_chosen_logps, policy_rejected_logps, reference_chosen_logps, reference_rejected_logps, beta):
-    """Per-example beta * ((pi_w - pi_l) - (ref_w - ref_l)); reference terms are constants."""
     device = policy_chosen_logps.device
     pc, pr = _upcast(policy_chosen_logps), _upcast(policy_rejected_logps)
     rc = _upcast(reference_chosen_logps).detach().to(device)
@@ -97,7 +78,6 @@ def compute_dpo_loss_from_logps(
     reference_rejected_logps,
     beta,
 ):
-    """Scalar batch-mean DPO loss: -log sigmoid(beta * (delta_policy - delta_reference))."""
     logits = dpo_logits(
         policy_chosen_logps, policy_rejected_logps, reference_chosen_logps, reference_rejected_logps, beta
     )

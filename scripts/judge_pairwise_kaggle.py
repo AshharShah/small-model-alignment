@@ -1,15 +1,3 @@
-"""Pairwise LLM-judge evaluation over saved A/B files (Task 7).
-
-Reads a pairs JSONL built by build_pairs.py and asks a judge model, in small batches, which of two anonymous
-responses is better. The judge only ever sees: pair_id, instruction, Response A, Response B (never model names,
-checkpoint names or the hidden _meta). Verdicts are mapped back to model identities AFTER judging.
-
-Reliability (assignment 13.2): small batches, >= sleep_seconds between request attempts, retries per batch, every
-batch written to the output file as soon as it is judged, a separate failure log, resume from an existing output,
-and a summary of win / loss / tie / unknown / failure rates.
-
-Judge backends: Kaggle model proxy through kaggle_benchmarks (default), or `--judge_model mock` for a dry run.
-"""
 import argparse
 import hashlib
 import json
@@ -48,8 +36,6 @@ SAFETY_ADDENDUM = (
 
 SAFETY = GENERAL + "\n" + SAFETY_ADDENDUM
 
-# "Plain" variants: exactly the criteria listed in the assignment, with none of the extra guidance about length,
-# repetition or abrupt endings. Used only as a rubric-sensitivity check on the main comparisons.
 PLAIN = (
     "Compare Response A and Response B on: helpfulness, correctness, instruction-following, concision when "
     "appropriate, formatting, and absence of hallucinations or unsafe content.\n"
@@ -83,9 +69,7 @@ FORMAT = (
 WINNERS = {"A": "A", "B": "B", "TIE": "TIE", "TIED": "TIE", "DRAW": "TIE", "EQUAL": "TIE"}
 
 
-# ------------------------------------------------------------------ prompt / parsing
 def build_prompt(rows, rubric, swap=False):
-    """Judge-facing prompt. Reads ONLY pair_id, instruction, response_a, response_b from each row."""
     parts = [HEADER, RUBRICS[rubric], FORMAT, "Comparisons:"]
     for r in rows:
         a, b = (r["response_b"], r["response_a"]) if swap else (r["response_a"], r["response_b"])
@@ -97,7 +81,6 @@ def build_prompt(rows, rubric, swap=False):
 
 
 def _first_json_object(text):
-    """The first balanced {...} in text (handles code fences and chatter around the JSON)."""
     start = text.find("{")
     while start != -1:
         depth, in_str, esc = 0, False, False
@@ -126,7 +109,6 @@ def _first_json_object(text):
 
 
 def parse_verdicts(raw, expected_ids):
-    """-> {pair_id: (winner 'A'|'B'|'TIE', reason)} for the expected ids that were answered validly."""
     obj = _first_json_object(raw or "")
     items = obj.get("verdicts") if isinstance(obj, dict) else None
     out = {}
@@ -140,9 +122,7 @@ def parse_verdicts(raw, expected_ids):
     return out
 
 
-# ------------------------------------------------------------------ mapping back to model identity
 def map_verdict(row, winner_position, swap):
-    """Judge position (as presented) -> model identity and outcome relative to the model under test."""
     if winner_position == "TIE":
         return "tie", "tie"
     original = winner_position if not swap else ("B" if winner_position == "A" else "A")
@@ -159,7 +139,6 @@ def make_record(row, rubric, swap, winner_position, reason, info):
             "timestamp": datetime.now(timezone.utc).isoformat(timespec="seconds"), **info, "_meta": row["_meta"]}
 
 
-# ------------------------------------------------------------------ IO helpers
 def read_jsonl(path):
     p = Path(path)
     if not p.exists():
@@ -175,7 +154,6 @@ def append_jsonl(path, records):
 
 
 def completed_ids(out_path):
-    """Pairs that already have a valid verdict (UNKNOWN ones are retried on a rerun)."""
     done = {}
     for r in read_jsonl(out_path):
         if r["outcome"] != "unknown":
@@ -183,7 +161,6 @@ def completed_ids(out_path):
     return done
 
 
-# ------------------------------------------------------------------ the batch job
 def run_judging(pairs, judge_fn, out_path, fail_path, rubric, batch_size=5, sleep_seconds=5.0, max_retries=3,
                 reuse=True, swap=False, judge_identical=False, info=None, sleep_fn=time.sleep, log=print,
                 split_failed=True):
@@ -206,16 +183,15 @@ def run_judging(pairs, judge_fn, out_path, fail_path, rubric, batch_size=5, slee
     state = {"calls": 0}
 
     def attempt(rows, batch_index):
-        """Up to max_retries requests for `rows`; verdicts are written as soon as they arrive."""
         pending, errors, last_raw, attempts = list(rows), [], "", 0
         while pending and attempts < max_retries:
             attempts += 1
             if state["calls"]:
-                sleep_fn(sleep_seconds)          # >= sleep_seconds between request attempts
+                sleep_fn(sleep_seconds)
             state["calls"] += 1
             try:
                 last_raw = judge_fn(build_prompt(pending, rubric, swap))
-            except Exception as e:                # rate limits, denials, network: back off and retry
+            except Exception as e:
                 errors.append(f"attempt {attempts}: {type(e).__name__}: {str(e)[:300]}")
                 sleep_fn(sleep_seconds * attempts)
                 continue
@@ -234,19 +210,17 @@ def run_judging(pairs, judge_fn, out_path, fail_path, rubric, batch_size=5, slee
         batch, n_batches = todo[b0:b0 + batch_size], n_batches + 1
         pending, errors, last_raw, attempts = attempt(batch, n_batches)
         if pending and split_failed and len(pending) > 1:
-            # a whole batch keeps failing: one bad pair (e.g. content the judge will not process) can poison it,
-            # so judge the remaining pairs one at a time to isolate it
             split_batches += 1
             errors.append(f"batch failed {attempts} attempts; judging the {len(pending)} remaining pairs individually")
             for r in list(pending):
                 left, e2, raw2, a2 = attempt([r], n_batches)
                 errors += [f"{r['pair_id']}: {e}" for e in e2]
                 attempts += a2
-                if left:                                  # keep the raw reply of a pair that STILL failed, not a later success
+                if left:
                     last_raw = raw2 or last_raw
             valid = {x["pair_id"] for x in jsonl_valid(out)}
-            pending = [r for r in batch if r["pair_id"] not in valid]       # whatever is still unresolved
-        if pending:                              # exhausted retries: record UNKNOWN and log the failure
+            pending = [r for r in batch if r["pair_id"] not in valid]
+        if pending:
             failed_batches += 1
             append_jsonl(out, [make_record(r, rubric, swap, "UNKNOWN", "", {**info, "auto": None, "batch_index": n_batches,
                                                                           "attempts": attempts}) for r in pending])
@@ -260,15 +234,13 @@ def run_judging(pairs, judge_fn, out_path, fail_path, rubric, batch_size=5, slee
 
 
 def jsonl_valid(path):
-    """Records with a valid verdict currently in the output file."""
     return [r for r in read_jsonl(path) if r["outcome"] != "unknown"]
 
 
-# ------------------------------------------------------------------ summary
 def summarize(out_path, pairs, run_stats=None):
     last = {}
     for r in read_jsonl(out_path):
-        last[r["pair_id"]] = r                     # the latest record per pair wins
+        last[r["pair_id"]] = r
     recs = [last[p["pair_id"]] for p in pairs if p["pair_id"] in last]
     n = len(pairs)
     count = lambda k: sum(r["outcome"] == k for r in recs)
@@ -285,10 +257,7 @@ def summarize(out_path, pairs, run_stats=None):
     return s
 
 
-# ------------------------------------------------------------------ backends
 class MockJudge:
-    """Deterministic fake judge for dry runs and tests."""
-
     def __call__(self, prompt):
         ids = re.findall(r"pair_id=(\S+)", prompt)
         pick = lambda pid: ["A", "B", "TIE"][int(hashlib.md5(pid.encode()).hexdigest(), 16) % 3]
@@ -296,8 +265,6 @@ class MockJudge:
 
 
 class KaggleJudge:
-    """Judge through the Kaggle model proxy (kaggle_benchmarks). Every call is an isolated chat."""
-
     def __init__(self, model_name, fallback_to_default=False):
         import kaggle_benchmarks as kbench
         self.kbench = kbench

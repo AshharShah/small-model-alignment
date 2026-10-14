@@ -1,17 +1,5 @@
-"""From-scratch DPO training loop (no TRL, no HF Trainer).
-
-* policy  : SFT checkpoint, fp32 weights, fp16 autocast + GradScaler, trainable, on --policy_device
-* reference: frozen copy of the same SFT checkpoint on --ref_device (default fp32 weights run under the
-             same fp16 autocast, so policy and reference are numerically identical at step 0)
-* one preference pair per micro-batch (chosen and rejected scored in a single 2-row forward pass),
-  gradient accumulation to an effective batch of 32 pairs, fixed LR, gradient clipping
-* validation: DPO loss, reward accuracy (strict r_w > r_l), reward margin; reference log-probs for the
-  validation set are computed once up front
-* checkpoints: best by validation reward accuracy (ties broken by lower validation loss) and final
-"""
 import os
 
-# Reduces CUDA memory fragmentation; must be set before torch initialises CUDA.
 os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
 
 import argparse
@@ -87,7 +75,6 @@ def set_seed(seed):
 
 
 def seq_logps(model, batch, device, amp):
-    """Summed response-token log-probs for every row of a (concatenated) batch -> [rows], float32."""
     ids = batch["input_ids"].to(device)
     mask = batch["attention_mask"].to(device)
     labels = batch["labels"].to(device)
@@ -98,7 +85,6 @@ def seq_logps(model, batch, device, amp):
 
 @torch.no_grad()
 def reference_logps_for(loader, ref, ref_device, ref_amp):
-    """[N, 2] (chosen, rejected) reference log-probs for a non-shuffled loader, kept on the CPU."""
     out = []
     for batch in loader:
         c, r = split_pair(seq_logps(ref, batch, ref_device, ref_amp))
@@ -175,7 +161,7 @@ def main():
     train_loader = DataLoader(train_ds, batch_size=1, shuffle=True, drop_last=True, collate_fn=collate, generator=gen)
     val_loader = DataLoader(val_ds, batch_size=args.eval_batch_size, shuffle=False, collate_fn=collate)
 
-    steps_per_epoch = len(train_loader) // args.grad_accum  # a trailing partial accumulation group is dropped
+    steps_per_epoch = len(train_loader) // args.grad_accum
     total_steps = steps_per_epoch * args.epochs
     if args.max_steps:
         total_steps = min(total_steps, args.max_steps)
@@ -205,7 +191,7 @@ def main():
     ref_val = reference_logps_for(val_loader, ref, rdev, ref_amp)
     print(f"reference log-probs for {len(ref_val)} validation pairs computed in {time.time() - t0:.0f}s", flush=True)
 
-    best = (-1.0, float("inf"))  # (reward accuracy, -> lower loss better)
+    best = (-1.0, float("inf"))
     best_step = None
 
     def validate(step):
@@ -231,7 +217,7 @@ def main():
     done = False
     for epoch in range(args.epochs):
         for batch in train_loader:
-            with torch.no_grad():  # launched first: runs on the reference GPU while the policy GPU computes
+            with torch.no_grad():
                 ref_logps = seq_logps(ref, batch, rdev, ref_amp)
             pc, pr = split_pair(seq_logps(policy, batch, pdev, amp))
             rc, rr = split_pair(ref_logps.to(pdev))

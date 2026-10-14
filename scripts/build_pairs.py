@@ -1,16 +1,3 @@
-"""Build a randomized A/B pairwise comparison file for LLM-judge evaluation (Task 6).
-
-Input : two generation files (JSON lists from generate.py / generate_chat.py) over the SAME prompts, in the same
-        order: the model under test (e.g. DPO) and the reference (e.g. SFT).
-Output: <out>.jsonl  one row per prompt:
-            pair_id, id, instruction, response_a, response_b          <- the only fields a judge may see
-            _meta {a_model, b_model, ...}                              <- hidden; used only after judging
-        <out>.summary.json  counts for the report (balance, identical outputs, truncation, empty, leak scan)
-
-Position assignment is balanced and seeded: exactly half the pairs (rounded down) put the model under test in
-position A, and which half is a seeded shuffle, so position bias in the judge cannot favour either model.
-The judge-facing prompt builder (Task 7) must read ONLY instruction / response_a / response_b.
-"""
 import argparse
 import json
 import random
@@ -25,7 +12,7 @@ def build_pairs(test, ref, test_name, ref_name, prompts=None, seed=42, prefix="p
         raise ValueError("the two generation files do not cover the same prompt ids in the same order")
     n = len(test)
     prompt_info = {p["id"]: p for p in (prompts or [])}
-    flags = [True] * (n // 2) + [False] * (n - n // 2)  # True -> model under test is Response A
+    flags = [True] * (n // 2) + [False] * (n - n // 2)
     random.Random(seed).shuffle(flags)
 
     rows = []

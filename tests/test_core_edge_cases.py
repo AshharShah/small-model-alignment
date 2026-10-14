@@ -1,8 +1,3 @@
-"""Edge-case tests for the SFT/DPO core, beyond the public smoke tests.
-
-All tests use the offline toy tokenizer/model, so they run on CPU in seconds.
-"""
-
 from __future__ import annotations
 
 import math
@@ -29,7 +24,6 @@ class NoPadTokenizer(ToyTokenizer):
 
 
 def _manual_logps(model, tokenizer, prompt, response, max_length):
-    """Independent reference implementation for a single row (full log_softmax)."""
     p = tokenizer.encode(prompt, add_special_tokens=False)
     r = tokenizer.encode(response, add_special_tokens=False) + [tokenizer.eos_token_id]
     ids = (p + r)[:max_length]
@@ -37,13 +31,12 @@ def _manual_logps(model, tokenizer, prompt, response, max_length):
     logits = model(input_ids=torch.tensor([ids])).logits[0]
     logp = F.log_softmax(logits.float(), dim=-1)
     total = torch.tensor(0.0)
-    for t in range(1, len(ids)):  # token t is predicted from position t-1
+    for t in range(1, len(ids)):
         if labels[t] != -100:
             total = total + logp[t - 1, labels[t]]
     return total
 
 
-# ---------------------------------------------------------------- batching
 def test_eos_survives_when_it_exactly_fits_and_is_dropped_when_it_does_not():
     tok = ToyTokenizer()
     prompt, response = "Q: ", "abc"
@@ -55,7 +48,7 @@ def test_eos_survives_when_it_exactly_fits_and_is_dropped_when_it_does_not():
 
     cut = adapter.build_sft_batch(tok, [prompt], [response], max_length=full - 1)
     assert cut["input_ids"].shape[1] == full - 1
-    assert cut["labels"][0, -1].item() == tok.encode("c")[0]  # last kept token is a response token
+    assert cut["labels"][0, -1].item() == tok.encode("c")[0]
     assert not (cut["labels"] == tok.eos_token_id).any()
 
 
@@ -68,7 +61,7 @@ def test_prompt_longer_than_max_length_gives_no_response_tokens_and_zero_loss():
 
     loss = adapter.compute_sft_loss(model, tok, ["a" * 30], ["resp"], max_length=10)
     assert torch.isfinite(loss) and loss.item() == 0.0
-    loss.backward()  # graph must still be intact (no error); gradients are zero
+    loss.backward()
     assert model.logit_bias.grad is not None and model.logit_bias.grad.abs().sum() == 0
 
     logps = adapter.compute_response_logprobs(model, tok, ["a" * 30], ["resp"], max_length=10)
@@ -103,9 +96,9 @@ def test_empty_prompt_row_first_token_is_labelled_but_never_scored():
     tok = ToyTokenizer()
     model = ToyCausalLM(tok.vocab_size, bias_scale=0.4)
     batch = adapter.build_sft_batch(tok, [""], ["ab"], max_length=16)
-    assert batch["labels"][0, 0].item() == tok.encode("a")[0]  # labelled
+    assert batch["labels"][0, 0].item() == tok.encode("a")[0]
     logps = adapter.compute_response_logprobs(model, tok, [""], ["ab"], max_length=16)
-    expected = _manual_logps(model, tok, "", "ab", 16)  # scores only 'b' and EOS
+    expected = _manual_logps(model, tok, "", "ab", 16)
     torch.testing.assert_close(logps[0], expected)
 
 
@@ -122,7 +115,7 @@ def test_tokenizer_without_pad_falls_back_to_eos_for_padding_only():
     pad_positions = batch["attention_mask"].eq(0)
     assert pad_positions.any()
     assert batch["input_ids"][pad_positions].eq(tok.eos_token_id).all()
-    assert batch["labels"][pad_positions].eq(-100).all()  # padding never scored even though pad==eos
+    assert batch["labels"][pad_positions].eq(-100).all()
 
 
 def test_mismatched_lengths_raise():
@@ -133,7 +126,6 @@ def test_mismatched_lengths_raise():
         adapter.build_dpo_batch(tok, ["a"], ["x", "y"], ["z"], max_length=8)
 
 
-# ---------------------------------------------------------------- log-probs
 def test_logprobs_match_independent_manual_computation():
     tok = ToyTokenizer()
     model = ToyCausalLM(tok.vocab_size, bias_scale=1.3)
@@ -169,7 +161,7 @@ def test_truncated_response_is_scored_only_up_to_the_cut():
     full = adapter.compute_response_logprobs(model, tok, ["Q: "], ["abcdef"], max_length=64)
     cut = adapter.compute_response_logprobs(model, tok, ["Q: "], ["abcdef"], max_length=len("Q: ") + 3)
     torch.testing.assert_close(cut[0], _manual_logps(model, tok, "Q: ", "abcdef", len("Q: ") + 3))
-    assert cut[0] > full[0]  # fewer scored tokens -> higher (less negative) total
+    assert cut[0] > full[0]
 
 
 def test_logps_from_logits_ignores_everything_outside_the_mask():
@@ -178,14 +170,13 @@ def test_logps_from_logits_ignores_everything_outside_the_mask():
     labels = torch.tensor([[-100, -100, 3, 4, 5, -100], [-100, 2, 2, -100, -100, -100]])
     base = sequence_logps_from_logits(logits, labels)
 
-    # Position t scores labels[t+1]. Row 0 scores positions 1..3; row 1 scores positions 0..1.
     noisy = logits.clone()
-    noisy[0, 4:, :] += torch.randn(2, 11) * 50  # positions 4,5 predict nothing for row 0
-    noisy[1, 2:, :] += torch.randn(4, 11) * 50  # positions 2.. predict nothing for row 1
+    noisy[0, 4:, :] += torch.randn(2, 11) * 50
+    noisy[1, 2:, :] += torch.randn(4, 11) * 50
     assert torch.equal(sequence_logps_from_logits(noisy, labels), base)
 
     changed = logits.clone()
-    changed[0, 3, 5] += 3.0  # position 3 predicts label 5 for row 0: this one is scored
+    changed[0, 3, 5] += 3.0
     assert sequence_logps_from_logits(changed, labels)[0] != base[0]
 
 
@@ -196,7 +187,6 @@ def test_half_precision_logits_are_scored_in_float32():
     assert out.dtype == torch.float32
 
 
-# ---------------------------------------------------------------- SFT loss
 def test_sft_loss_is_token_mean_and_matches_manual():
     tok = ToyTokenizer()
     model = ToyCausalLM(tok.vocab_size, bias_scale=0.6)
@@ -207,7 +197,6 @@ def test_sft_loss_is_token_mean_and_matches_manual():
     torch.testing.assert_close(loss, nll / n_tokens)
 
 
-# ---------------------------------------------------------------- DPO
 def test_dpo_from_logps_matches_formula_and_log_two_at_equal_policy_and_reference():
     pc, pr = torch.tensor([-10.0, -20.0]), torch.tensor([-12.0, -18.0])
     rc, rr = torch.tensor([-11.0, -19.0]), torch.tensor([-11.5, -18.5])
@@ -215,7 +204,6 @@ def test_dpo_from_logps_matches_formula_and_log_two_at_equal_policy_and_referenc
     logits = beta * ((pc - pr) - (rc - rr))
     expected = -torch.log(torch.sigmoid(logits)).mean()
     torch.testing.assert_close(adapter.compute_dpo_loss_from_logps(pc, pr, rc, rr, beta), expected)
-    # policy == reference -> log 2 regardless of the values
     torch.testing.assert_close(
         adapter.compute_dpo_loss_from_logps(pc, pr, pc, pr, beta), torch.log(torch.tensor(2.0))
     )
@@ -270,7 +258,7 @@ def test_dpo_training_steps_increase_the_chosen_vs_rejected_margin():
     pc = adapter.compute_response_logprobs(policy, tok, prompts, chosen, 32)
     pr = adapter.compute_response_logprobs(policy, tok, prompts, rejected, 32)
     assert (pc - pr).mean() > 0
-    assert torch.equal(reference.logit_bias, torch.zeros_like(reference.logit_bias))  # reference untouched
+    assert torch.equal(reference.logit_bias, torch.zeros_like(reference.logit_bias))
 
 
 def test_dpo_batch_keeps_rows_aligned_between_chosen_and_rejected():

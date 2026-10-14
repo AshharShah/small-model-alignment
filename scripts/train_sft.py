@@ -1,9 +1,3 @@
-"""From-scratch SFT training loop (no HF Trainer).
-
-fp32 trainable weights + fp16 autocast + GradScaler, gradient accumulation,
-gradient clipping, warmup + cosine LR, response-only loss, validation loss,
-best/final checkpoints (fp16 safetensors), and a metrics.jsonl written as we go.
-"""
 import argparse
 import json
 import math
@@ -24,6 +18,7 @@ from alignment.objectives import response_token_mask, sequence_logps_from_logits
 from alignment.prompts import PROMPT_TEMPLATE, format_prompt
 
 os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
+
 
 def parse_args():
     ap = argparse.ArgumentParser()
@@ -75,7 +70,6 @@ def set_seed(seed):
 
 
 def lr_multiplier(step, warmup_steps, total_steps):
-    """Linear warmup then cosine decay to 0. ``step`` counts completed optimizer steps."""
     if step < warmup_steps:
         return (step + 1) / warmup_steps
     progress = (step - warmup_steps) / max(1, total_steps - warmup_steps)
@@ -96,7 +90,6 @@ def make_optimizer(model, args, use_cuda):
 
 @torch.no_grad()
 def evaluate(model, loader, device, use_amp):
-    """Exact token-mean validation NLL over all response tokens."""
     if device.type == "cuda":
         torch.cuda.empty_cache()
     model.eval()
@@ -116,16 +109,15 @@ def evaluate(model, loader, device, use_amp):
 
 
 def save_checkpoint(model, tokenizer, path):
-    """fp16 safetensors + tokenizer, written to a temp dir first so a crash never corrupts `path`."""
     path = Path(path)
     tmp = Path(str(path) + ".tmp")
     if tmp.exists():
         shutil.rmtree(tmp)
     state = {k: v.detach().to("cpu", torch.float16) for k, v in model.state_dict().items()}
     if getattr(model.config, "tie_word_embeddings", False):
-        state.pop("lm_head.weight", None)  # tied to the embedding; re-tied on load
+        state.pop("lm_head.weight", None)
     use_cache_during_training = model.config.use_cache
-    model.config.use_cache = True  # training disables the KV cache; generation needs it on
+    model.config.use_cache = True
     try:
         model.save_pretrained(tmp, state_dict=state, safe_serialization=True)
     finally:
@@ -168,7 +160,7 @@ def main():
                               collate_fn=collate, generator=gen)
     val_loader = DataLoader(val_ds, batch_size=args.eval_batch_size, shuffle=False, collate_fn=collate)
 
-    steps_per_epoch = len(train_loader) // args.grad_accum  # a trailing partial accumulation group is dropped
+    steps_per_epoch = len(train_loader) // args.grad_accum
     total_steps = steps_per_epoch * args.epochs
     if args.max_steps:
         total_steps = min(total_steps, args.max_steps)
@@ -234,7 +226,7 @@ def main():
                 elapsed = time.time() - t0
                 rec = {
                     "type": "train", "step": step, "epoch": epoch,
-                    "train_loss": acc_loss.item(),  # mean over this step's accumulation group
+                    "train_loss": acc_loss.item(),
                     "lr": scheduler.get_last_lr()[0], "grad_norm": float(grad_norm),
                     "loss_scale": scaler.get_scale() if use_amp else 1.0,
                     "elapsed_s": elapsed,
