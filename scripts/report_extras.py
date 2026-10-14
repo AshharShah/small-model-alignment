@@ -7,6 +7,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 
 import summarize_judgments as sj
+from alignment.persona import looping
 
 
 def jl(path):
@@ -36,6 +37,13 @@ CONSISTENCY = [("dpo_uf_vs_sft_alpaca300", "dpo_uf_vs_sft_alpaca300_swapped", "D
                ("dpo_hh_vs_sft_hh300", "dpo_hh_vs_sft_hh300_plainrubric", "DPO-HH vs SFT, HH eval: default vs plain rubric")]
 
 COLORS = {"base": "tab:gray", "SFT": "tab:green", "DPO-HH": "tab:blue", "DPO-UF": "tab:orange"}
+
+DECODING_TAG = "rep1p1"
+
+DECODING_PAIRS = [("dpo_uf_vs_sft_alpaca300", "DPO-UF vs SFT, AlpacaEval", "AlpacaEval-300",
+                   [("SFT", "sft_qwen2.5-0.5b_alpaca300"), ("DPO-UF", "dpo_uf_qwen2.5-0.5b_alpaca300")]),
+                  ("dpo_hh_vs_sft_hh300", "DPO-HH vs SFT, HH eval", "HH-eval-300",
+                   [("SFT", "sft_qwen2.5-0.5b_hh300"), ("DPO-HH", "dpo_hh_qwen2.5-0.5b_hh300")])]
 
 BIAS_RUNS = [("dpo_uf_vs_sft_alpaca300", "DPO-UF vs SFT, AlpacaEval"), ("dpo_hh_vs_sft_hh300", "DPO-HH vs SFT, HH eval")]
 
@@ -393,6 +401,39 @@ def fig_lengths(root, out):
     plt.close(fig)
 
 
+def penalty_text(root, stem):
+    p = root / "results/generations" / f"{stem}.meta.json"
+    return f"repetition penalty {js(p)['decoding']['repetition_penalty']:g}" if p.exists() else "repetition penalty ?"
+
+
+def table_decoding_sensitivity(root, out):
+    verdicts, behaviour = [], []
+    g = root / "results/generations"
+    for fn, label, setname, models in DECODING_PAIRS:
+        for suffix in ("", f"_{DECODING_TAG}"):
+            recs = load_judged(root, fn + suffix)
+            if recs is None or not (g / f"{models[1][1]}{suffix}.json").exists():
+                break
+        else:
+            for suffix in ("", f"_{DECODING_TAG}"):
+                setting = penalty_text(root, models[1][1] + suffix) + (" (main)" if not suffix else "")
+                s = sj.stats(load_judged(root, fn + suffix))
+                p = s["sign_test_p"]
+                verdicts.append([label, setting, wtl(s), rate_ci(s), "-" if p is None else ("<0.001" if p < 0.001 else f"{p:.3f}"), s["unknown"]])
+                for name, stem in models:
+                    res = js(g / f"{stem}{suffix}.json")
+                    toks = [r["num_new_tokens"] for r in res]
+                    behaviour.append([name, setname, setting, f"{sum(bool(r['hit_eos']) for r in res)}/{len(res)}", sum(t >= 512 for t in toks),
+                                      round(statistics.mean(toks)), sum(looping(r["output"]) for r in res)])
+    if not verdicts:
+        print("skip table_decoding_sensitivity: repetition-penalty runs not available")
+        return
+    text = "Same models, prompts, batch composition and judge; only the repetition penalty changes.\n\n"
+    text += md_table(["comparison", "decoding", "W/T/L", "win rate (no ties) [95% CI]", "sign-test p", "unknown"], verdicts)
+    text += "\n" + md_table(["model", "eval set", "decoding", "ended with EOS", "hit 512-token cap", "mean tokens", "repeated-phrase outputs"], behaviour)
+    (out / "table_decoding_sensitivity.md").write_text(text)
+
+
 def clip(text, n=520):
     text = " ".join(text.split())
     return text if len(text) <= n else text[:n].rstrip() + " ..."
@@ -502,6 +543,7 @@ INDEX = [
     ("fig_hh_categories.png", "14.6", "the same as a dot plot"),
     ("table_alpaca_sources.md", "14.6", "AlpacaEval win rates per prompt source"),
     ("table_hh_refusals.md", "14.6", "refusal-phrase rate per HH category"),
+    ("table_decoding_sensitivity.md", "14.7", "main comparisons again with a repetition penalty: do the conclusions change?"),
     ("examples.md", "14.6", "candidate DPO vs SFT examples (consistent across both judge orders)"),
     ("examples_persona.md", "14.6", "candidate persona examples for base, selected and strongest adapter"),
     ("key_numbers.json", "-", "numbers behind the tables, for quoting in the text"),
@@ -525,6 +567,7 @@ def build_all(root, out, ctx, labelled):
     table_hh_categories(root, out)
     table_alpaca_sources(root, out)
     table_refusals(root, out)
+    table_decoding_sensitivity(root, out)
     fig_lengths(root, out)
     build_examples(root, out)
     build_persona_examples(root, out, ctx)
