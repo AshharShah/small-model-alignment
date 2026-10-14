@@ -191,4 +191,93 @@ def test_existing_output_without_reuse_is_refused(tmp_path):
 def test_identical_pairs_are_auto_ties_and_not_sent_to_the_judge(tmp_path):
     pairs = make_pairs(8, identical={2, 5})
     judge = scripted()
-    stats, _, out, _ = run(pairs, judge, tmp_path, batch_size=5, sleep_seconds=0.0, max_retries=2,
+    stats, _, out, _ = run(pairs, judge, tmp_path, batch_size=5, sleep_seconds=0.0, max_retries=2, reuse=False)
+    sent = "".join(judge.prompts)
+    assert pairs[2]["pair_id"] not in sent and pairs[5]["pair_id"] not in sent
+    recs = {r["pair_id"]: r for r in jp.read_jsonl(out)}
+    assert recs[pairs[2]["pair_id"]]["outcome"] == "tie" and recs[pairs[2]["pair_id"]]["auto"] == "identical"
+    assert jp.summarize(out, pairs, stats)["auto_ties_identical"] == 2
+
+
+def test_swap_run_maps_back_to_the_same_underlying_response(tmp_path):
+    """A judge that always prefers whatever text contains 'TESTTEXT' must give 'test_win' with and without swap."""
+    pairs = make_pairs(6)
+
+    def prefers_test(prompt):
+        verdicts = []
+        for block in prompt.split("### Comparison pair_id=")[1:]:
+            pid = block.split("\n")[0]
+            a_text = block.split("Response A:\n<<<\n")[1].split("\n>>>")[0]
+            verdicts.append({"pair_id": pid, "winner": "A" if "TESTTEXT" in a_text else "B", "reason": ""})
+        return json.dumps({"verdicts": verdicts})
+    for swap, sub in ((False, "n"), (True, "s")):
+        d = tmp_path / sub
+        d.mkdir()
+        _, _, out, _ = run(pairs, prefers_test, d, batch_size=5, sleep_seconds=0.0, max_retries=2, reuse=False, swap=swap)
+        assert all(r["outcome"] == "test_win" for r in jp.read_jsonl(out))
+
+
+def test_one_poison_pair_is_isolated_instead_of_losing_the_whole_batch(tmp_path):
+    pairs = make_pairs(5)
+    poison = pairs[2]["pair_id"]
+    prompts = []
+
+    def judge(prompt):                                    # the judge cannot process any request containing the poison pair
+        prompts.append(prompt)
+        if f"pair_id={poison}" in prompt:
+            raise RuntimeError("content blocked")
+        return scripted()(prompt)
+    stats, sleeps, out, fail = run(pairs, judge, tmp_path, batch_size=5, sleep_seconds=5.0, max_retries=3, reuse=False)
+    assert stats["failed_batches"] == 1 and stats["batches_split_after_failure"] == 1
+    assert stats["judge_calls"] == 3 + 4 + 3                      # batch x3, four clean singles, poison single x3
+    failures = jp.read_jsonl(fail)
+    assert len(failures) == 1 and failures[0]["pair_ids"] == [poison]
+    final = jp.summarize(out, pairs, stats)
+    assert final["unknown"] == 1 and final["test_win"] + final["ref_win"] == 4
+    assert all(s >= 5.0 for s in sleeps)
+    singles = [p for p in prompts if p.count("### Comparison") == 1]
+    assert len(singles) == 7 and all("SECRETNAME" not in p for p in prompts)
+
+
+def test_failure_log_keeps_the_raw_reply_of_the_pair_that_failed(tmp_path):
+    pairs = make_pairs(5)
+    poison = pairs[1]["pair_id"]
+    inner = scripted()
+
+    def judge(prompt):
+        return "BLOCKED-BY-POLICY" if f"pair_id={poison}" in prompt else inner(prompt)
+    _, _, _, fail = run(pairs, judge, tmp_path, batch_size=5, sleep_seconds=0.0, max_retries=2, reuse=False)
+    rec = jp.read_jsonl(fail)[0]
+    assert rec["pair_ids"] == [poison] and rec["last_raw_response"] == "BLOCKED-BY-POLICY"   # not a later success
+    assert any(e.startswith(f"{poison}:") for e in rec["errors"])
+
+
+def test_split_can_be_disabled(tmp_path):
+    pairs = make_pairs(5)
+    judge = lambda prompt: "no json"
+    stats, _, _, fail = run(pairs, judge, tmp_path, batch_size=5, sleep_seconds=0.0, max_retries=2, reuse=False,
+                            split_failed=False)
+    assert stats["judge_calls"] == 2 and stats["batches_split_after_failure"] == 0
+    assert len(jp.read_jsonl(fail)) == 1
+
+
+# ---------------------------------------------------------------- statistics
+def test_wilson_and_sign_test_known_values():
+    lo, hi = sj.wilson(5, 10)
+    assert abs(lo - 0.2366) < 1e-3 and abs(hi - 0.7634) < 1e-3
+    assert sj.wilson(0, 0) == (None, None)
+    assert sj.sign_test_p(8, 2) == pytest.approx(0.1094, abs=1e-4)
+    assert sj.sign_test_p(5, 5) == 1.0 and sj.sign_test_p(0, 0) is None
+
+
+def test_analysis_groups_and_overall_counts(tmp_path):
+    pairs = make_pairs(12)
+    _, _, out, _ = run(pairs, scripted(lambda pid: "TIE" if int(pid.split("-")[1]) % 4 == 0 else "A"), tmp_path,
+                       batch_size=5, sleep_seconds=0.0, max_retries=2, reuse=False)
+    recs = sj.load_last(out)
+    result = sj.analyze(recs)
+    o = result["overall"]
+    assert o["n"] == 12 and o["wins"] + o["losses"] + o["ties"] + o["unknown"] == 12 and o["ties"] == 3
+    assert sum(g["n"] for g in result["by_test_position"].values()) == 12
+    assert set(result["by_length"]) <= {"test_longer(>1.2x)", "similar_length", "test_shorter(<0.8x)"}
+    assert sum(g["n"] for g in result["by_truncation"].values()) == 12
