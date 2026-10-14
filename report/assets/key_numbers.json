@@ -3,23 +3,28 @@
     "val_loss_step0": 1.3498745320280463,
     "val_loss_final": 1.3234732576626116,
     "val_loss_min": 1.3234732576626116,
-    "steps": 937
+    "steps": 937,
+    "train_minutes": 78.78820700645447
   },
   "dpo_hh": {
     "val_acc_step0": 0.08300000429153442,
     "val_acc_final": 0.6360000371932983,
     "val_acc_best": 0.6440000534057617,
+    "best_step": 400,
     "val_margin_final": 0.24764472246170044,
     "val_loss_final": 0.6301820278167725,
-    "max_abs_reward_step0": 2.441406286379788e-05
+    "max_abs_reward_step0": 2.441406286379788e-05,
+    "train_minutes": 51.09773983558019
   },
   "dpo_uf": {
     "val_acc_step0": 0.26500001549720764,
     "val_acc_final": 0.706000030040741,
     "val_acc_best": 0.706000030040741,
+    "best_step": 468,
     "val_margin_final": 0.634911060333252,
     "val_loss_final": 0.5603647232055664,
-    "max_abs_reward_step0": 4.272460864740424e-05
+    "max_abs_reward_step0": 4.272460864740424e-05,
+    "train_minutes": 70.02354805072149
   },
   "generation": {
     "Qwen2.5-0.5B base | AlpacaEval-300": {

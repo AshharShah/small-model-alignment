@@ -11,16 +11,10 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+import report_extras
 import summarize_judgments as sj
 from alignment.persona import build_lexicon, degeneration_reasons, looping, split_persona_rows, style_metrics
-
-
-def jl(path):
-    return [json.loads(l) for l in Path(path).read_text().splitlines() if l.strip()]
-
-
-def js(path):
-    return json.loads(Path(path).read_text())
+from report_extras import jl, js, md_table, run_label
 
 
 def short(run):
@@ -66,44 +60,62 @@ def smooth(xs, k=5):
     return out
 
 
-def md_table(header, rows):
-    lines = ["| " + " | ".join(header) + " |", "|" + "|".join("---" for _ in header) + "|"]
-    lines += ["| " + " | ".join(str(c) for c in r) + " |" for r in rows]
-    return "\n".join(lines) + "\n"
-
-
 def fig_training(root, out, key):
     sft = root / "results/sft/metrics.jsonl"
     dpo = {n: root / f"results/dpo_{n}/metrics.jsonl" for n in ("hh", "uf")}
     if not sft.exists():
         print("skip fig_training: results/sft/metrics.jsonl missing")
         return
-    fig, ax = plt.subplots(2, 2, figsize=(11, 7))
+    colors = {"hh": "tab:blue", "uf": "tab:orange"}
+    fig, ax = plt.subplots(2, 2, figsize=(11.5, 8))
     recs = jl(sft)
     tr = [r for r in recs if r["type"] == "train"]
     ev = [r for r in recs if r["type"] == "eval"]
-    ax[0, 0].plot([r["step"] for r in tr], smooth([r["train_loss"] for r in tr]), alpha=0.8, label="train (5-point mean)")
-    ax[0, 0].plot([r["step"] for r in ev], [r["val_loss"] for r in ev], "o-", label="validation")
-    ax[0, 0].set(title="(a) SFT loss", xlabel="optimizer step", ylabel="response-token NLL"); ax[0, 0].legend()
+    ax[0, 0].plot([r["step"] for r in tr], smooth([r["train_loss"] for r in tr]), color="tab:blue", alpha=0.6, label="train (5-point mean)")
+    ax[0, 0].plot([r["step"] for r in ev], [r["val_loss"] for r in ev], "o-", color="tab:orange", label="validation")
+    best_sft = js(root / "results/sft/summary.json")
+    ax[0, 0].axvline(best_sft["best_step"], color="grey", ls=":", lw=1)
+    ax[0, 0].annotate(f"best = final checkpoint (step {best_sft['best_step']})", (best_sft["best_step"], max(r["val_loss"] for r in ev)),
+                      xytext=(-6, 0), textcoords="offset points", fontsize=7, ha="right", va="top", color="grey")
+    ax[0, 0].set(title="(a) SFT loss", xlabel="optimizer step", ylabel="response-token NLL")
+    ax[0, 0].legend(fontsize=8)
     key["sft"] = {"val_loss_step0": ev[0]["val_loss"], "val_loss_final": ev[-1]["val_loss"],
-                  "val_loss_min": min(r["val_loss"] for r in ev), "steps": tr[-1]["step"]}
-    titles = {"val_loss": "(b) DPO validation loss", "val_reward_acc": "(c) DPO validation reward accuracy",
-              "val_reward_margin": "(d) DPO validation reward margin"}
-    for a, (metric, title) in zip((ax[0, 1], ax[1, 0], ax[1, 1]), titles.items()):
+                  "val_loss_min": min(r["val_loss"] for r in ev), "steps": tr[-1]["step"], "train_minutes": best_sft["train_minutes"]}
+    panels = (("loss", "val_loss", "train_loss", "(b) DPO loss"), ("acc", "val_reward_acc", "train_reward_acc", "(c) DPO reward accuracy"),
+              ("margin", "val_reward_margin", "train_reward_margin", "(d) DPO reward margin"))
+    summaries = {n: js(root / f"results/dpo_{n}/summary.json") for n, p in dpo.items() if p.exists()}
+    for a, (kind, vkey, tkey, title) in zip((ax[0, 1], ax[1, 0], ax[1, 1]), panels):
         for name, path in dpo.items():
             if not path.exists():
                 continue
-            e = [r for r in jl(path) if r["type"] == "eval"]
-            a.plot([r["step"] for r in e], [r[metric] for r in e], "o-", label=f"{name.upper()}-DPO")
-        a.set(title=title, xlabel="optimizer step"); a.legend()
+            rows = jl(path)
+            t = [r for r in rows if r["type"] == "train"]
+            e = [r for r in rows if r["type"] == "eval"]
+            a.plot([r["step"] for r in t], smooth([r[tkey] for r in t]), color=colors[name], alpha=0.35, lw=1.4)
+            a.plot([r["step"] for r in e if r["step"] > 0], [r[vkey] for r in e if r["step"] > 0], "o-", color=colors[name], label=f"{name.upper()}-DPO validation")
+            first = e[0]
+            a.plot([first["step"]], [first[vkey]], "o", mfc="white", color=colors[name])
+            best = next(r for r in e if r["step"] == summaries[name]["best_step"])
+            a.plot([best["step"]], [best[vkey]], "*", ms=15, color=colors[name], mec="black", zorder=5)
+        a.set(title=title, xlabel="optimizer step")
+        if kind == "acc":
+            a.annotate("step 0: policy = reference,\nstrict r_w > r_l fires on float noise", (0, 0.1), fontsize=7, xytext=(25, 25), textcoords="offset points",
+                       arrowprops=dict(arrowstyle="-", color="grey"))
+        handles = [plt.Line2D([], [], color=colors[n], marker="o", label=f"{n.upper()}-DPO validation") for n in dpo if (root / f"results/dpo_{n}/metrics.jsonl").exists()]
+        handles += [plt.Line2D([], [], color="grey", alpha=0.5, label="train (5-point mean)"), plt.Line2D([], [], color="grey", marker="*", ls="", ms=11, mec="black", label="checkpoint kept")]
+        a.legend(handles=handles, fontsize=7)
     for name, path in dpo.items():
         if path.exists():
             e = [r for r in jl(path) if r["type"] == "eval"]
             key[f"dpo_{name}"] = {"val_acc_step0": e[0]["val_reward_acc"], "val_acc_final": e[-1]["val_reward_acc"],
-                                  "val_acc_best": max(r["val_reward_acc"] for r in e),
+                                  "val_acc_best": max(r["val_reward_acc"] for r in e), "best_step": summaries[name]["best_step"],
                                   "val_margin_final": e[-1]["val_reward_margin"], "val_loss_final": e[-1]["val_loss"],
-                                  "max_abs_reward_step0": e[0].get("val_max_abs_reward")}
-    fig.tight_layout(); fig.savefig(out / "fig_training.png", dpi=170); plt.close(fig)
+                                  "max_abs_reward_step0": e[0].get("val_max_abs_reward"), "train_minutes": summaries[name]["train_minutes"]}
+    fig.text(0.5, 0.005, "Train: one value per optimizer step (SFT 32 examples, DPO 32 pairs), logged every 10 (SFT) / 5 (DPO) steps, then a 5-point moving average. "
+             "Validation: 1,000 pairs (DPO) every 100 steps.", ha="center", fontsize=7.5, color="dimgray")
+    fig.tight_layout(rect=(0, 0.02, 1, 1))
+    fig.savefig(out / "fig_training.png", dpi=170)
+    plt.close(fig)
 
 
 def table_config(root, out):
@@ -295,7 +307,7 @@ def table_lora(root, out, key, ctx):
                      eos(s22), loops(s22), wtl22, eos(s40), loops(s40), wtl40, state])
         summary[run] = {"heldout22": {"stats": s22, "style_wtl": wtl22}, "eval40": {"stats": s40, "style_wtl": wtl40}, "filter": state}
         if s40 and s22 and score22 is not None and score40 is not None:
-            name = f"lr {float(r['lr']):.0e}, {float(r['epochs']):g} ep, " + ("DPO+NLL" if float(r["rpo_alpha"]) > 0 else "DPO")
+            name = run_label(r)
             points.append((run, score22, s22["hit_eos"] / s22["n"], score40, s40["hit_eos"] / s40["n"], name))
     (out / "table_lora_sweep.md").write_text(md_table(
         ["run", "rpo alpha", "epochs", "lr", "steps", "val margin", "held-out: EOS of 22", "held-out: repeated-phrase outputs",
@@ -340,7 +352,9 @@ def main():
     table_judge(root, out, key, ctx)
     table_judge_strata(root, out)
     table_lora(root, out, key, ctx)
+    report_extras.build_all(root, out, ctx, DPO_ROWS + persona_rows(ctx) + ROBUSTNESS_ROWS)
     (out / "key_numbers.json").write_text(json.dumps(key, indent=2))
+    report_extras.write_index(out)
     print("wrote:", ", ".join(sorted(p.name for p in out.iterdir())))
 
 
