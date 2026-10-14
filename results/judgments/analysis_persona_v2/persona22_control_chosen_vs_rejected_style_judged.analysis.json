@@ -1,0 +1,113 @@
+{
+  "overall": {
+    "n": 22,
+    "wins": 22,
+    "ties": 0,
+    "losses": 0,
+    "unknown": 0,
+    "win_rate_excl_ties": 1.0,
+    "wilson95_excl_ties": [
+      0.8513,
+      1.0
+    ],
+    "win_rate_ties_half": 1.0,
+    "sign_test_p": 0.0
+  },
+  "judge_position_picks (as shown)": {
+    "A": 11,
+    "B": 11,
+    "TIE": 0
+  },
+  "by_category": {
+    "heldout": {
+      "n": 22,
+      "wins": 22,
+      "ties": 0,
+      "losses": 0,
+      "unknown": 0,
+      "win_rate_excl_ties": 1.0,
+      "wilson95_excl_ties": [
+        0.8513,
+        1.0
+      ],
+      "win_rate_ties_half": 1.0,
+      "sign_test_p": 0.0
+    }
+  },
+  "by_length": {
+    "unknown_length": {
+      "n": 22,
+      "wins": 22,
+      "ties": 0,
+      "losses": 0,
+      "unknown": 0,
+      "win_rate_excl_ties": 1.0,
+      "wilson95_excl_ties": [
+        0.8513,
+        1.0
+      ],
+      "win_rate_ties_half": 1.0,
+      "sign_test_p": 0.0
+    }
+  },
+  "by_truncation": {
+    "none_truncated": {
+      "n": 22,
+      "wins": 22,
+      "ties": 0,
+      "losses": 0,
+      "unknown": 0,
+      "win_rate_excl_ties": 1.0,
+      "wilson95_excl_ties": [
+        0.8513,
+        1.0
+      ],
+      "win_rate_ties_half": 1.0,
+      "sign_test_p": 0.0
+    }
+  },
+  "by_test_position": {
+    "test_in_A": {
+      "n": 11,
+      "wins": 11,
+      "ties": 0,
+      "losses": 0,
+      "unknown": 0,
+      "win_rate_excl_ties": 1.0,
+      "wilson95_excl_ties": [
+        0.7412,
+        1.0
+      ],
+      "win_rate_ties_half": 1.0,
+      "sign_test_p": 0.001
+    },
+    "test_in_B": {
+      "n": 11,
+      "wins": 11,
+      "ties": 0,
+      "losses": 0,
+      "unknown": 0,
+      "win_rate_excl_ties": 1.0,
+      "wilson95_excl_ties": [
+        0.7412,
+        1.0
+      ],
+      "win_rate_ties_half": 1.0,
+      "sign_test_p": 0.001
+    }
+  },
+  "excluding_identical_auto_ties": {
+    "n": 22,
+    "wins": 22,
+    "ties": 0,
+    "losses": 0,
+    "unknown": 0,
+    "win_rate_excl_ties": 1.0,
+    "wilson95_excl_ties": [
+      0.8513,
+      1.0
+    ],
+    "win_rate_ties_half": 1.0,
+    "sign_test_p": 0.0
+  }
+}

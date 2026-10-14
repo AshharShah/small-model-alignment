@@ -144,8 +144,12 @@ def test_selection_reports_no_real_shift_and_handles_all_degenerate():
 
 
 def test_degeneration_thresholds_are_relative_to_the_base_model_and_apply_to_both_sets():
-    ok = _cand("ok", 1, 1, 1, eos40=34, loops40=15)
-    assert not P.degeneration_reasons(ok["stats"], BASE)
+    exactly_at_limit = _cand("limit", 1, 1, 1, eos40=33, loops40=15)
+    assert not P.degeneration_reasons(exactly_at_limit["stats"], BASE)
+    just_beyond = _cand("beyond", 1, 1, 1, eos40=32)
+    assert any("eos" in x.lower() for x in P.degeneration_reasons(just_beyond["stats"], BASE))
+    loops_beyond = _cand("loops", 1, 1, 1, loops40=16)
+    assert any("repeated-phrase" in x for x in P.degeneration_reasons(loops_beyond["stats"], BASE))
     bad_dev = _cand("bad", 1, 1, 1, loops22=9)
     assert any(x.startswith("heldout22") for x in P.degeneration_reasons(bad_dev["stats"], BASE))
 

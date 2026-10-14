@@ -57,6 +57,7 @@ def style_metrics(records, lexicon):
 SPLITS = ("heldout22", "eval40")
 EOS_DROP_MAX = 0.10
 LOOP_RISE_MAX = 0.10
+_TOL = 1e-9
 
 RULE = (
     "1) Discard degenerate adapters: on either evaluation set the EOS rate may not fall by more than "
@@ -82,9 +83,9 @@ def degeneration_reasons(stats, base_stats):
         c, b = stats[split], base_stats[split]
         c_eos, b_eos = c["hit_eos"] / c["n"], b["hit_eos"] / b["n"]
         c_loop, b_loop = c["repeated_phrase_outputs"] / c["n"], b["repeated_phrase_outputs"] / b["n"]
-        if c_eos < b_eos - EOS_DROP_MAX:
+        if c_eos < b_eos - EOS_DROP_MAX - _TOL:
             reasons.append(f"{split}: EOS rate {c_eos:.2f} vs base {b_eos:.2f}")
-        if c_loop > b_loop + LOOP_RISE_MAX:
+        if c_loop > b_loop + LOOP_RISE_MAX + _TOL:
             reasons.append(f"{split}: repeated-phrase rate {c_loop:.2f} vs base {b_loop:.2f}")
     return reasons
 

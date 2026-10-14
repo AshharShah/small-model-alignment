@@ -1,0 +1,94 @@
+{
+  "rule": "1) Discard degenerate adapters: on either evaluation set the EOS rate may not fall by more than 10% and the repeated-phrase rate may not rise by more than 10% relative to the base model. 2) Among the rest, pick the highest persona-style score (wins + 0.5 ties over judged pairs) against the base model on the HELD-OUT-22 set only (the 40 required prompts are never used for selection). 3) Ties go to fewer optimizer steps, then to the name. 4) The choice counts as a real style shift only if the two-sided sign test (ties dropped) gives p < 0.05 with more wins than losses.",
+  "candidates": [
+    {
+      "name": "r16_lr1e-4_rpo1_e6",
+      "steps": 78,
+      "dev_wins": 19,
+      "dev_ties": 3,
+      "dev_losses": 0,
+      "dev_style_score": 0.9318,
+      "dev_sign_test_p": 0.0,
+      "degenerate": true,
+      "degenerate_reasons": [
+        "heldout22: EOS rate 0.68 vs base 1.00",
+        "heldout22: repeated-phrase rate 0.41 vs base 0.09"
+      ]
+    },
+    {
+      "name": "r16_lr5e-5_rpo1_e6",
+      "steps": 78,
+      "dev_wins": 12,
+      "dev_ties": 10,
+      "dev_losses": 0,
+      "dev_style_score": 0.7727,
+      "dev_sign_test_p": 0.0005,
+      "degenerate": true,
+      "degenerate_reasons": [
+        "heldout22: EOS rate 0.45 vs base 1.00",
+        "heldout22: repeated-phrase rate 0.55 vs base 0.09",
+        "eval40: EOS rate 0.80 vs base 0.93",
+        "eval40: repeated-phrase rate 0.42 vs base 0.28"
+      ]
+    },
+    {
+      "name": "r16_lr5e-5_e10",
+      "steps": 130,
+      "dev_wins": 10,
+      "dev_ties": 12,
+      "dev_losses": 0,
+      "dev_style_score": 0.7273,
+      "dev_sign_test_p": 0.002,
+      "degenerate": true,
+      "degenerate_reasons": [
+        "heldout22: EOS rate 0.14 vs base 1.00",
+        "heldout22: repeated-phrase rate 0.91 vs base 0.09",
+        "eval40: EOS rate 0.28 vs base 0.93",
+        "eval40: repeated-phrase rate 0.82 vs base 0.28"
+      ]
+    },
+    {
+      "name": "r16_lr1e-4_rpo1",
+      "steps": 39,
+      "dev_wins": 8,
+      "dev_ties": 14,
+      "dev_losses": 0,
+      "dev_style_score": 0.6818,
+      "dev_sign_test_p": 0.0078,
+      "degenerate": true,
+      "degenerate_reasons": [
+        "heldout22: EOS rate 0.45 vs base 1.00",
+        "heldout22: repeated-phrase rate 0.55 vs base 0.09",
+        "eval40: EOS rate 0.70 vs base 0.93",
+        "eval40: repeated-phrase rate 0.45 vs base 0.28"
+      ]
+    },
+    {
+      "name": "r16_lr5e-5_rpo1",
+      "steps": 39,
+      "dev_wins": 2,
+      "dev_ties": 20,
+      "dev_losses": 0,
+      "dev_style_score": 0.5455,
+      "dev_sign_test_p": 0.5,
+      "degenerate": false,
+      "degenerate_reasons": []
+    },
+    {
+      "name": "r16_lr5e-5",
+      "steps": 39,
+      "dev_wins": 1,
+      "dev_ties": 21,
+      "dev_losses": 0,
+      "dev_style_score": 0.5227,
+      "dev_sign_test_p": 1.0,
+      "degenerate": true,
+      "degenerate_reasons": [
+        "heldout22: EOS rate 0.86 vs base 1.00",
+        "heldout22: repeated-phrase rate 0.23 vs base 0.09"
+      ]
+    }
+  ],
+  "selected": "r16_lr5e-5_rpo1",
+  "selected_style_shift_significant": false
+}

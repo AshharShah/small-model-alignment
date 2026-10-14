@@ -1,0 +1,482 @@
+====================================================================================================
+persona22_control_chosen_vs_rejected_style_judged | test=dataset_chosen vs ref=dataset_rejected | rubric=persona_style | swap=False | judge=google/gemini-3.6-flash
+
+OVERALL
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  overall                      22   22    0     0    0          1.000     [0.8513, 1.0]   0.000
+  excluding identical auto-ties   22   22    0     0    0          1.000     [0.8513, 1.0]   0.000
+
+judge position picks (as shown): {'A': 11, 'B': 11, 'TIE': 0}
+
+BY_TEST_POSITION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  test_in_A                    11   11    0     0    0          1.000     [0.7412, 1.0]   0.001
+  test_in_B                    11   11    0     0    0          1.000     [0.7412, 1.0]   0.001
+====================================================================================================
+persona22_r16_lr1e-4_rpo1_e6_vs_base_style_judged | test=lora_r16_lr1e-4_rpo1_e6 vs ref=smollm2_base | rubric=persona_style | swap=False | judge=google/gemini-3.6-flash
+
+OVERALL
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  overall                      22   19    3     0    0          1.000     [0.8318, 1.0]   0.000
+  excluding identical auto-ties   22   19    3     0    0          1.000     [0.8318, 1.0]   0.000
+
+judge position picks (as shown): {'A': 8, 'B': 11, 'TIE': 3}
+
+BY_TEST_POSITION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  test_in_A                    11    8    3     0    0          1.000     [0.6756, 1.0]   0.008
+  test_in_B                    11   11    0     0    0          1.000     [0.7412, 1.0]   0.001
+
+BY_LENGTH
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  similar_length                1    1    0     0    0          1.000     [0.2065, 1.0]   1.000
+  test_longer(>1.2x)            9    6    3     0    0          1.000     [0.6097, 1.0]   0.031
+  test_shorter(<0.8x)          12   12    0     0    0          1.000     [0.7575, 1.0]   0.001
+
+BY_TRUNCATION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  any_truncated                 7    4    3     0    0          1.000     [0.5101, 1.0]   0.125
+  none_truncated               15   15    0     0    0          1.000     [0.7961, 1.0]   0.000
+====================================================================================================
+persona22_r16_lr1e-4_rpo1_vs_base_style_judged | test=lora_r16_lr1e-4_rpo1 vs ref=smollm2_base | rubric=persona_style | swap=False | judge=google/gemini-3.6-flash
+
+OVERALL
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  overall                      22    8   14     0    0          1.000     [0.6756, 1.0]   0.008
+  excluding identical auto-ties   22    8   14     0    0          1.000     [0.6756, 1.0]   0.008
+
+judge position picks (as shown): {'A': 4, 'B': 4, 'TIE': 14}
+
+BY_TEST_POSITION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  test_in_A                    11    4    7     0    0          1.000     [0.5101, 1.0]   0.125
+  test_in_B                    11    4    7     0    0          1.000     [0.5101, 1.0]   0.125
+
+BY_LENGTH
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  test_longer(>1.2x)           14    4   10     0    0          1.000     [0.5101, 1.0]   0.125
+  test_shorter(<0.8x)           8    4    4     0    0          1.000     [0.5101, 1.0]   0.125
+
+BY_TRUNCATION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  any_truncated                12    4    8     0    0          1.000     [0.5101, 1.0]   0.125
+  none_truncated               10    4    6     0    0          1.000     [0.5101, 1.0]   0.125
+====================================================================================================
+persona22_r16_lr5e-5_e10_vs_base_style_judged | test=lora_r16_lr5e-5_e10 vs ref=smollm2_base | rubric=persona_style | swap=False | judge=google/gemini-3.6-flash
+
+OVERALL
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  overall                      22   10   12     0    0          1.000     [0.7225, 1.0]   0.002
+  excluding identical auto-ties   22   10   12     0    0          1.000     [0.7225, 1.0]   0.002
+
+judge position picks (as shown): {'A': 5, 'B': 5, 'TIE': 12}
+
+BY_TEST_POSITION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  test_in_A                    11    5    6     0    0          1.000     [0.5655, 1.0]   0.062
+  test_in_B                    11    5    6     0    0          1.000     [0.5655, 1.0]   0.062
+
+BY_LENGTH
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  similar_length                1    1    0     0    0          1.000     [0.2065, 1.0]   1.000
+  test_longer(>1.2x)           20    9   11     0    0          1.000     [0.7008, 1.0]   0.004
+  test_shorter(<0.8x)           1    0    1     0    0              -                 -       -
+
+BY_TRUNCATION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  any_truncated                19    8   11     0    0          1.000     [0.6756, 1.0]   0.008
+  none_truncated                3    2    1     0    0          1.000     [0.3424, 1.0]   0.500
+====================================================================================================
+persona22_r16_lr5e-5_rpo1_e6_vs_base_style_judged | test=lora_r16_lr5e-5_rpo1_e6 vs ref=smollm2_base | rubric=persona_style | swap=False | judge=google/gemini-3.6-flash
+
+OVERALL
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  overall                      22   12   10     0    0          1.000     [0.7575, 1.0]   0.001
+  excluding identical auto-ties   22   12   10     0    0          1.000     [0.7575, 1.0]   0.001
+
+judge position picks (as shown): {'A': 7, 'B': 5, 'TIE': 10}
+
+BY_TEST_POSITION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  test_in_A                    11    7    4     0    0          1.000     [0.6457, 1.0]   0.016
+  test_in_B                    11    5    6     0    0          1.000     [0.5655, 1.0]   0.062
+
+BY_LENGTH
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  test_longer(>1.2x)           13    8    5     0    0          1.000     [0.6756, 1.0]   0.008
+  test_shorter(<0.8x)           9    4    5     0    0          1.000     [0.5101, 1.0]   0.125
+
+BY_TRUNCATION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  any_truncated                12    8    4     0    0          1.000     [0.6756, 1.0]   0.008
+  none_truncated               10    4    6     0    0          1.000     [0.5101, 1.0]   0.125
+====================================================================================================
+persona22_r16_lr5e-5_rpo1_vs_base_style_judged | test=lora_r16_lr5e-5_rpo1 vs ref=smollm2_base | rubric=persona_style | swap=False | judge=google/gemini-3.6-flash
+
+OVERALL
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  overall                      22    2   20     0    0          1.000     [0.3424, 1.0]   0.500
+  excluding identical auto-ties   22    2   20     0    0          1.000     [0.3424, 1.0]   0.500
+
+judge position picks (as shown): {'A': 1, 'B': 1, 'TIE': 20}
+
+BY_TEST_POSITION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  test_in_A                    11    1   10     0    0          1.000     [0.2065, 1.0]   1.000
+  test_in_B                    11    1   10     0    0          1.000     [0.2065, 1.0]   1.000
+
+BY_LENGTH
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  similar_length                8    1    7     0    0          1.000     [0.2065, 1.0]   1.000
+  test_longer(>1.2x)            5    1    4     0    0          1.000     [0.2065, 1.0]   1.000
+  test_shorter(<0.8x)           9    0    9     0    0              -                 -       -
+
+BY_TRUNCATION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  any_truncated                 2    0    2     0    0              -                 -       -
+  none_truncated               20    2   18     0    0          1.000     [0.3424, 1.0]   0.500
+====================================================================================================
+persona22_r16_lr5e-5_vs_base_style_judged | test=lora_r16_lr5e-5 vs ref=smollm2_base | rubric=persona_style | swap=False | judge=google/gemini-3.6-flash
+
+OVERALL
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  overall                      22    1   21     0    0          1.000     [0.2065, 1.0]   1.000
+  excluding identical auto-ties   22    1   21     0    0          1.000     [0.2065, 1.0]   1.000
+
+judge position picks (as shown): {'A': 1, 'B': 0, 'TIE': 21}
+
+BY_TEST_POSITION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  test_in_A                    11    1   10     0    0          1.000     [0.2065, 1.0]   1.000
+  test_in_B                    11    0   11     0    0              -                 -       -
+
+BY_LENGTH
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  similar_length                5    0    5     0    0              -                 -       -
+  test_longer(>1.2x)           10    1    9     0    0          1.000     [0.2065, 1.0]   1.000
+  test_shorter(<0.8x)           7    0    7     0    0              -                 -       -
+
+BY_TRUNCATION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  any_truncated                 3    0    3     0    0              -                 -       -
+  none_truncated               19    1   18     0    0          1.000     [0.2065, 1.0]   1.000
+====================================================================================================
+persona40_r16_lr1e-4_rpo1_e6_vs_base_style_judged | test=lora_r16_lr1e-4_rpo1_e6 vs ref=smollm2_base | rubric=persona_style | swap=False | judge=google/gemini-3.6-flash
+
+OVERALL
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  overall                      40   24   16     0    0          1.000      [0.862, 1.0]   0.000
+  excluding identical auto-ties   40   24   16     0    0          1.000      [0.862, 1.0]   0.000
+
+judge position picks (as shown): {'A': 15, 'B': 9, 'TIE': 16}
+
+BY_TEST_POSITION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  test_in_A                    20   15    5     0    0          1.000     [0.7961, 1.0]   0.000
+  test_in_B                    20    9   11     0    0          1.000     [0.7008, 1.0]   0.004
+
+BY_LENGTH
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  similar_length                4    2    2     0    0          1.000     [0.3424, 1.0]   0.500
+  test_longer(>1.2x)            7    0    7     0    0              -                 -       -
+  test_shorter(<0.8x)          29   22    7     0    0          1.000     [0.8513, 1.0]   0.000
+
+BY_TRUNCATION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  any_truncated                 9    1    8     0    0          1.000     [0.2065, 1.0]   1.000
+  none_truncated               31   23    8     0    0          1.000     [0.8569, 1.0]   0.000
+
+BY_CATEGORY
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  coding                       10    6    4     0    0          1.000     [0.6097, 1.0]   0.031
+  cooking                      10    9    1     0    0          1.000     [0.7008, 1.0]   0.004
+  general_help                 10    3    7     0    0          1.000     [0.4385, 1.0]   0.250
+  safety_sensitive             10    6    4     0    0          1.000     [0.6097, 1.0]   0.031
+====================================================================================================
+persona40_r16_lr1e-4_rpo1_vs_base_style_judged | test=lora_r16_lr1e-4_rpo1 vs ref=smollm2_base | rubric=persona_style | swap=False | judge=google/gemini-3.6-flash
+
+OVERALL
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  overall                      40    1   39     0    0          1.000     [0.2065, 1.0]   1.000
+  excluding identical auto-ties   40    1   39     0    0          1.000     [0.2065, 1.0]   1.000
+
+judge position picks (as shown): {'A': 1, 'B': 0, 'TIE': 39}
+
+BY_TEST_POSITION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  test_in_A                    20    1   19     0    0          1.000     [0.2065, 1.0]   1.000
+  test_in_B                    20    0   20     0    0              -                 -       -
+
+BY_LENGTH
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  similar_length               11    0   11     0    0              -                 -       -
+  test_longer(>1.2x)           11    0   11     0    0              -                 -       -
+  test_shorter(<0.8x)          18    1   17     0    0          1.000     [0.2065, 1.0]   1.000
+
+BY_TRUNCATION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  any_truncated                13    0   13     0    0              -                 -       -
+  none_truncated               27    1   26     0    0          1.000     [0.2065, 1.0]   1.000
+
+BY_CATEGORY
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  coding                       10    0   10     0    0              -                 -       -
+  cooking                      10    1    9     0    0          1.000     [0.2065, 1.0]   1.000
+  general_help                 10    0   10     0    0              -                 -       -
+  safety_sensitive             10    0   10     0    0              -                 -       -
+====================================================================================================
+persona40_r16_lr5e-5_e10_vs_base_style_judged | test=lora_r16_lr5e-5_e10 vs ref=smollm2_base | rubric=persona_style | swap=False | judge=google/gemini-3.6-flash
+
+OVERALL
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  overall                      40    9   31     0    0          1.000     [0.7008, 1.0]   0.004
+  excluding identical auto-ties   40    9   31     0    0          1.000     [0.7008, 1.0]   0.004
+
+judge position picks (as shown): {'A': 5, 'B': 4, 'TIE': 31}
+
+BY_TEST_POSITION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  test_in_A                    20    5   15     0    0          1.000     [0.5655, 1.0]   0.062
+  test_in_B                    20    4   16     0    0          1.000     [0.5101, 1.0]   0.125
+
+BY_LENGTH
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  similar_length                8    1    7     0    0          1.000     [0.2065, 1.0]   1.000
+  test_longer(>1.2x)           26    5   21     0    0          1.000     [0.5655, 1.0]   0.062
+  test_shorter(<0.8x)           6    3    3     0    0          1.000     [0.4385, 1.0]   0.250
+
+BY_TRUNCATION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  any_truncated                29    3   26     0    0          1.000     [0.4385, 1.0]   0.250
+  none_truncated               11    6    5     0    0          1.000     [0.6097, 1.0]   0.031
+
+BY_CATEGORY
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  coding                       10    2    8     0    0          1.000     [0.3424, 1.0]   0.500
+  cooking                      10    6    4     0    0          1.000     [0.6097, 1.0]   0.031
+  general_help                 10    0   10     0    0              -                 -       -
+  safety_sensitive             10    1    9     0    0          1.000     [0.2065, 1.0]   1.000
+====================================================================================================
+persona40_r16_lr5e-5_rpo1_e6_vs_base_style_judged | test=lora_r16_lr5e-5_rpo1_e6 vs ref=smollm2_base | rubric=persona_style | swap=False | judge=google/gemini-3.6-flash
+
+OVERALL
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  overall                      40    1   39     0    0          1.000     [0.2065, 1.0]   1.000
+  excluding identical auto-ties   40    1   39     0    0          1.000     [0.2065, 1.0]   1.000
+
+judge position picks (as shown): {'A': 1, 'B': 0, 'TIE': 39}
+
+BY_TEST_POSITION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  test_in_A                    20    1   19     0    0          1.000     [0.2065, 1.0]   1.000
+  test_in_B                    20    0   20     0    0              -                 -       -
+
+BY_LENGTH
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  similar_length               10    0   10     0    0              -                 -       -
+  test_longer(>1.2x)            9    0    9     0    0              -                 -       -
+  test_shorter(<0.8x)          21    1   20     0    0          1.000     [0.2065, 1.0]   1.000
+
+BY_TRUNCATION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  any_truncated                11    0   11     0    0              -                 -       -
+  none_truncated               29    1   28     0    0          1.000     [0.2065, 1.0]   1.000
+
+BY_CATEGORY
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  coding                       10    0   10     0    0              -                 -       -
+  cooking                      10    1    9     0    0          1.000     [0.2065, 1.0]   1.000
+  general_help                 10    0   10     0    0              -                 -       -
+  safety_sensitive             10    0   10     0    0              -                 -       -
+====================================================================================================
+persona40_r16_lr5e-5_rpo1_vs_base_safety_judged | test=lora_r16_lr5e-5_rpo1 vs ref=smollm2_base | rubric=persona_safety | swap=False | judge=google/gemini-3.6-flash
+
+OVERALL
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  overall                      40    4   32     4    0          0.500  [0.2152, 0.7848]   1.000
+  excluding identical auto-ties   40    4   32     4    0          0.500  [0.2152, 0.7848]   1.000
+
+judge position picks (as shown): {'A': 5, 'B': 3, 'TIE': 32}
+
+BY_TEST_POSITION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  test_in_A                    20    4   13     3    0          0.571  [0.2505, 0.8418]   1.000
+  test_in_B                    20    0   19     1    0          0.000     [0.0, 0.7935]   1.000
+
+BY_LENGTH
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  similar_length               15    1   14     0    0          1.000     [0.2065, 1.0]   1.000
+  test_longer(>1.2x)           12    2    8     2    0          0.500      [0.15, 0.85]   1.000
+  test_shorter(<0.8x)          13    1   10     2    0          0.333  [0.0615, 0.7923]   1.000
+
+BY_TRUNCATION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  any_truncated                 8    1    6     1    0          0.500  [0.0945, 0.9055]   1.000
+  none_truncated               32    3   26     3    0          0.500  [0.1876, 0.8124]   1.000
+
+BY_CATEGORY
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  coding                       10    0   10     0    0              -                 -       -
+  cooking                      10    0    9     1    0          0.000     [0.0, 0.7935]   1.000
+  general_help                 10    0   10     0    0              -                 -       -
+  safety_sensitive             10    4    3     3    0          0.571  [0.2505, 0.8418]   1.000
+====================================================================================================
+persona40_r16_lr5e-5_rpo1_vs_base_style_judged | test=lora_r16_lr5e-5_rpo1 vs ref=smollm2_base | rubric=persona_style | swap=False | judge=google/gemini-3.6-flash
+
+OVERALL
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  overall                      40    0   40     0    0              -                 -       -
+  excluding identical auto-ties   40    0   40     0    0              -                 -       -
+
+judge position picks (as shown): {'A': 0, 'B': 0, 'TIE': 40}
+
+BY_TEST_POSITION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  test_in_A                    20    0   20     0    0              -                 -       -
+  test_in_B                    20    0   20     0    0              -                 -       -
+
+BY_LENGTH
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  similar_length               15    0   15     0    0              -                 -       -
+  test_longer(>1.2x)           12    0   12     0    0              -                 -       -
+  test_shorter(<0.8x)          13    0   13     0    0              -                 -       -
+
+BY_TRUNCATION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  any_truncated                 8    0    8     0    0              -                 -       -
+  none_truncated               32    0   32     0    0              -                 -       -
+
+BY_CATEGORY
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  coding                       10    0   10     0    0              -                 -       -
+  cooking                      10    0   10     0    0              -                 -       -
+  general_help                 10    0   10     0    0              -                 -       -
+  safety_sensitive             10    0   10     0    0              -                 -       -
+====================================================================================================
+persona40_r16_lr5e-5_rpo1_vs_base_useful_judged | test=lora_r16_lr5e-5_rpo1 vs ref=smollm2_base | rubric=general | swap=False | judge=google/gemini-3.6-flash
+
+OVERALL
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  overall                      40   16    3    21    0          0.432  [0.2867, 0.5909]   0.511
+  excluding identical auto-ties   40   16    3    21    0          0.432  [0.2867, 0.5909]   0.511
+
+judge position picks (as shown): {'A': 20, 'B': 17, 'TIE': 3}
+
+BY_TEST_POSITION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  test_in_A                    20    9    1    10    0          0.474  [0.2733, 0.6829]   1.000
+  test_in_B                    20    7    2    11    0          0.389   [0.203, 0.6138]   0.481
+
+BY_LENGTH
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  similar_length               15    7    1     7    0          0.500    [0.268, 0.732]   1.000
+  test_longer(>1.2x)           12    3    1     8    0          0.273  [0.0975, 0.5657]   0.227
+  test_shorter(<0.8x)          13    6    1     6    0          0.500  [0.2538, 0.7462]   1.000
+
+BY_TRUNCATION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  any_truncated                 8    4    0     4    0          0.500  [0.2152, 0.7848]   1.000
+  none_truncated               32   12    3    17    0          0.414  [0.2551, 0.5926]   0.458
+
+BY_CATEGORY
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  coding                       10    4    0     6    0          0.400  [0.1682, 0.6873]   0.754
+  cooking                      10    3    3     4    0          0.429  [0.1582, 0.7495]   1.000
+  general_help                 10    3    0     7    0          0.300  [0.1078, 0.6032]   0.344
+  safety_sensitive             10    6    0     4    0          0.600  [0.3127, 0.8318]   0.754
+====================================================================================================
+persona40_r16_lr5e-5_vs_base_safety_judged | test=lora_r16_lr5e-5 vs ref=smollm2_base | rubric=persona_safety | swap=False | judge=google/gemini-3.6-flash
+
+OVERALL
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  overall                      40    3   32     5    0          0.375  [0.1368, 0.6943]   0.727
+  excluding identical auto-ties   38    3   30     5    0          0.375  [0.1368, 0.6943]   0.727
+
+judge position picks (as shown): {'A': 5, 'B': 3, 'TIE': 32}
+
+BY_TEST_POSITION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  test_in_A                    20    3   14     3    0          0.500  [0.1876, 0.8124]   1.000
+  test_in_B                    20    0   18     2    0          0.000     [0.0, 0.6576]   0.500
+
+BY_LENGTH
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  similar_length               22    1   19     2    0          0.333  [0.0615, 0.7923]   1.000
+  test_longer(>1.2x)            6    2    3     1    0          0.667  [0.2077, 0.9385]   1.000
+  test_shorter(<0.8x)          12    0   10     2    0          0.000     [0.0, 0.6576]   0.500
+
+BY_TRUNCATION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  any_truncated                 3    0    3     0    0              -                 -       -
+  none_truncated               37    3   29     5    0          0.375  [0.1368, 0.6943]   0.727
+
+BY_CATEGORY
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  coding                       10    0   10     0    0              -                 -       -
+  cooking                      10    0    9     1    0          0.000     [0.0, 0.7935]   1.000
+  general_help                 10    0   10     0    0              -                 -       -
+  safety_sensitive             10    3    3     4    0          0.429  [0.1582, 0.7495]   1.000
+====================================================================================================
+persona40_r16_lr5e-5_vs_base_style_judged | test=lora_r16_lr5e-5 vs ref=smollm2_base | rubric=persona_style | swap=False | judge=google/gemini-3.6-flash
+
+OVERALL
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  overall                      40    0   40     0    0              -                 -       -
+  excluding identical auto-ties   38    0   38     0    0              -                 -       -
+
+judge position picks (as shown): {'A': 0, 'B': 0, 'TIE': 40}
+
+BY_TEST_POSITION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  test_in_A                    20    0   20     0    0              -                 -       -
+  test_in_B                    20    0   20     0    0              -                 -       -
+
+BY_LENGTH
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  similar_length               22    0   22     0    0              -                 -       -
+  test_longer(>1.2x)            6    0    6     0    0              -                 -       -
+  test_shorter(<0.8x)          12    0   12     0    0              -                 -       -
+
+BY_TRUNCATION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  any_truncated                 3    0    3     0    0              -                 -       -
+  none_truncated               37    0   37     0    0              -                 -       -
+
+BY_CATEGORY
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  coding                       10    0   10     0    0              -                 -       -
+  cooking                      10    0   10     0    0              -                 -       -
+  general_help                 10    0   10     0    0              -                 -       -
+  safety_sensitive             10    0   10     0    0              -                 -       -
+====================================================================================================
+persona40_r16_lr5e-5_vs_base_useful_judged | test=lora_r16_lr5e-5 vs ref=smollm2_base | rubric=general | swap=False | judge=google/gemini-3.6-flash
+
+OVERALL
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  overall                      40   15   10    15    0          0.500  [0.3315, 0.6685]   1.000
+  excluding identical auto-ties   38   15    8    15    0          0.500  [0.3315, 0.6685]   1.000
+
+judge position picks (as shown): {'A': 22, 'B': 8, 'TIE': 10}
+
+BY_TEST_POSITION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  test_in_A                    20   11    5     4    0          0.733   [0.4805, 0.891]   0.118
+  test_in_B                    20    4    5    11    0          0.267   [0.109, 0.5195]   0.118
+
+BY_LENGTH
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  similar_length               22    8    7     7    0          0.533  [0.3012, 0.7519]   1.000
+  test_longer(>1.2x)            6    2    0     4    0          0.333     [0.0968, 0.7]   0.688
+  test_shorter(<0.8x)          12    5    3     4    0          0.556  [0.2666, 0.8112]   1.000
+
+BY_TRUNCATION
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  any_truncated                 3    2    1     0    0          1.000     [0.3424, 1.0]   0.500
+  none_truncated               37   13    9    15    0          0.464  [0.2953, 0.6419]   0.851
+
+BY_CATEGORY
+  group                         n  win  tie  loss  unk  win%(no ties)            95% CI       p
+  coding                       10    2    5     3    0          0.400  [0.1176, 0.7693]   1.000
+  cooking                      10    6    2     2    0          0.750  [0.4093, 0.9285]   0.289
+  general_help                 10    3    0     7    0          0.300  [0.1078, 0.6032]   0.344
+  safety_sensitive             10    4    3     3    0          0.571  [0.2505, 0.8418]   1.000
