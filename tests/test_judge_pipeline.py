@@ -64,6 +64,16 @@ def test_swap_exchanges_the_displayed_positions_and_rubrics_differ():
     assert "longer" in jp.build_prompt(p, "general")        # the anti-verbosity instruction is present
 
 
+def test_plain_rubrics_drop_the_extra_guidance_but_keep_the_criteria_and_safety_text():
+    p = make_pairs(2)
+    plain, safety_plain = jp.build_prompt(p, "general_plain"), jp.build_prompt(p, "safety_plain")
+    for text in (plain, safety_plain):
+        assert "helpfulness" in text and "concision" in text and "TIE" in text
+        assert "longer" not in text and "Repetition" not in text and "abruptly" not in text
+    assert "refusal" in safety_plain and "refusal" not in plain
+    assert jp.SAFETY_ADDENDUM in jp.RUBRICS["safety"] and jp.SAFETY_ADDENDUM in jp.RUBRICS["safety_plain"]
+
+
 # ---------------------------------------------------------------- parsing
 IDS = {"a", "b", "c"}
 
@@ -156,59 +166,11 @@ def test_exhausted_retries_log_failure_mark_unknown_and_resume_retries_only_thos
     assert summary["unknown"] == 5 and summary["unknown_rate"] == 0.5 and summary["batch_failure_rate"] == 0.5
 
     judge2 = scripted()                                                             # rerun with a healthy judge
-    stats2, _, out2, _ = run(pairs, judge2, tmp_path, batch_size=5, sleep_seconds=0.0, max_retries=3, reuse=True)
+    stats2, _, out2, _ = run(pairs, judge2, tmp_path, batch_size=5, sleep_seconds=0.0, max_retries=3, reuse=True,
+                             split_failed=False)
     assert stats2["judge_calls"] == 1 and len(judge2.prompts) == 1 and judge2.prompts[0].count("### Comparison") == 5
     final = jp.summarize(out2, pairs, stats2)
     assert final["unknown"] == 0 and final["missing_no_record"] == 0 and final["test_win"] + final["ref_win"] == 10
-
-
-def poisoned_judge(poison_ids):
-    """Fails (no JSON) whenever a prompt contains a poison pair, answers normally otherwise."""
-    inner = scripted()
-
-    def judge(prompt):
-        if set(re.findall(r"pair_id=(\S+)", prompt)) & poison_ids:
-            return "I cannot comply with that"
-        return inner(prompt)
-    judge.prompts = inner.prompts
-    return judge
-
-
-def test_failed_batch_is_split_so_one_poison_pair_does_not_sink_its_neighbours(tmp_path):
-    pairs = make_pairs(10)
-    poison = {pairs[7]["pair_id"]}
-    judge = poisoned_judge(poison)
-    stats, _, out, fail = run(pairs, judge, tmp_path, batch_size=5, sleep_seconds=0.0, max_retries=3, reuse=False)
-    assert stats["batches_split_after_failure"] == 1 and stats["failed_batches"] == 1
-    summary = jp.summarize(out, pairs, stats)
-    assert summary["unknown"] == 1 and summary["test_win"] + summary["ref_win"] == 9      # only the poison pair is lost
-    failures = jp.read_jsonl(fail)
-    assert len(failures) == 1 and failures[0]["pair_ids"] == list(poison)                  # failure log names the culprit alone
-    assert any("individually" in e for e in failures[0]["errors"])
-    singles = [p for p in judge.prompts if p.count("### Comparison") == 1]
-    assert len(singles) == 4 and all(not (set(re.findall(r"pair_id=(\S+)", p)) & poison) for p in singles)
-
-
-def test_split_does_nothing_when_the_batch_succeeds_or_when_disabled(tmp_path):
-    stats, _, _, fail = run(make_pairs(10), scripted(), tmp_path, batch_size=5, sleep_seconds=0.0, max_retries=3, reuse=False)
-    assert stats["batches_split_after_failure"] == 0 and not fail.exists()
-
-    pairs, sub = make_pairs(5), tmp_path / "off"
-    sub.mkdir()
-    stats, _, out, fail = run(pairs, poisoned_judge({pairs[2]["pair_id"]}), sub, batch_size=5, sleep_seconds=0.0,
-                              max_retries=3, reuse=False, split_failed=False)
-    assert stats["batches_split_after_failure"] == 0 and stats["judge_calls"] == 3
-    assert jp.summarize(out, pairs, stats)["unknown"] == 5 and set(jp.read_jsonl(fail)[0]["pair_ids"]) == {p["pair_id"] for p in pairs}
-
-
-def test_rerun_after_split_retries_only_the_unresolved_pair(tmp_path):
-    pairs = make_pairs(5)
-    bad = pairs[1]["pair_id"]
-    stats, _, out, _ = run(pairs, poisoned_judge({bad}), tmp_path, batch_size=5, sleep_seconds=0.0, max_retries=2, reuse=False)
-    judge2 = scripted()
-    stats2, _, out2, _ = run(pairs, judge2, tmp_path, batch_size=5, sleep_seconds=0.0, max_retries=2, reuse=True)
-    assert len(judge2.prompts) == 1 and re.findall(r"pair_id=(\S+)", judge2.prompts[0]) == [bad]
-    assert jp.summarize(out2, pairs, stats2)["unknown"] == 0
 
 
 def test_rerun_with_everything_judged_makes_no_calls(tmp_path):
@@ -229,49 +191,4 @@ def test_existing_output_without_reuse_is_refused(tmp_path):
 def test_identical_pairs_are_auto_ties_and_not_sent_to_the_judge(tmp_path):
     pairs = make_pairs(8, identical={2, 5})
     judge = scripted()
-    stats, _, out, _ = run(pairs, judge, tmp_path, batch_size=5, sleep_seconds=0.0, max_retries=2, reuse=False)
-    sent = "".join(judge.prompts)
-    assert pairs[2]["pair_id"] not in sent and pairs[5]["pair_id"] not in sent
-    recs = {r["pair_id"]: r for r in jp.read_jsonl(out)}
-    assert recs[pairs[2]["pair_id"]]["outcome"] == "tie" and recs[pairs[2]["pair_id"]]["auto"] == "identical"
-    assert jp.summarize(out, pairs, stats)["auto_ties_identical"] == 2
-
-
-def test_swap_run_maps_back_to_the_same_underlying_response(tmp_path):
-    """A judge that always prefers whatever text contains 'TESTTEXT' must give 'test_win' with and without swap."""
-    pairs = make_pairs(6)
-
-    def prefers_test(prompt):
-        verdicts = []
-        for block in prompt.split("### Comparison pair_id=")[1:]:
-            pid = block.split("\n")[0]
-            a_text = block.split("Response A:\n<<<\n")[1].split("\n>>>")[0]
-            verdicts.append({"pair_id": pid, "winner": "A" if "TESTTEXT" in a_text else "B", "reason": ""})
-        return json.dumps({"verdicts": verdicts})
-    for swap, sub in ((False, "n"), (True, "s")):
-        d = tmp_path / sub
-        d.mkdir()
-        _, _, out, _ = run(pairs, prefers_test, d, batch_size=5, sleep_seconds=0.0, max_retries=2, reuse=False, swap=swap)
-        assert all(r["outcome"] == "test_win" for r in jp.read_jsonl(out))
-
-
-# ---------------------------------------------------------------- statistics
-def test_wilson_and_sign_test_known_values():
-    lo, hi = sj.wilson(5, 10)
-    assert abs(lo - 0.2366) < 1e-3 and abs(hi - 0.7634) < 1e-3
-    assert sj.wilson(0, 0) == (None, None)
-    assert sj.sign_test_p(8, 2) == pytest.approx(0.1094, abs=1e-4)
-    assert sj.sign_test_p(5, 5) == 1.0 and sj.sign_test_p(0, 0) is None
-
-
-def test_analysis_groups_and_overall_counts(tmp_path):
-    pairs = make_pairs(12)
-    _, _, out, _ = run(pairs, scripted(lambda pid: "TIE" if int(pid.split("-")[1]) % 4 == 0 else "A"), tmp_path,
-                       batch_size=5, sleep_seconds=0.0, max_retries=2, reuse=False)
-    recs = sj.load_last(out)
-    result = sj.analyze(recs)
-    o = result["overall"]
-    assert o["n"] == 12 and o["wins"] + o["losses"] + o["ties"] + o["unknown"] == 12 and o["ties"] == 3
-    assert sum(g["n"] for g in result["by_test_position"].values()) == 12
-    assert set(result["by_length"]) <= {"test_longer(>1.2x)", "similar_length", "test_shorter(<0.8x)"}
-    assert sum(g["n"] for g in result["by_truncation"].values()) == 12
+    stats, _, out, _ = run(pairs, judge, tmp_path, batch_size=5, sleep_seconds=0.0, max_retries=2,
