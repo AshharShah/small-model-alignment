@@ -66,44 +66,56 @@ def fig_training(root, out, key):
     if not sft.exists():
         print("skip fig_training: results/sft/metrics.jsonl missing")
         return
-    colors = {"hh": "tab:blue", "uf": "tab:orange"}
-    fig, ax = plt.subplots(2, 2, figsize=(11.5, 8))
-    recs = jl(sft)
-    tr = [r for r in recs if r["type"] == "train"]
-    ev = [r for r in recs if r["type"] == "eval"]
-    ax[0, 0].plot([r["step"] for r in tr], smooth([r["train_loss"] for r in tr]), color="tab:blue", alpha=0.6, label="train (5-point mean)")
-    ax[0, 0].plot([r["step"] for r in ev], [r["val_loss"] for r in ev], "o-", color="tab:orange", label="validation")
-    best_sft = js(root / "results/sft/summary.json")
-    ax[0, 0].axvline(best_sft["best_step"], color="grey", ls=":", lw=1)
-    ax[0, 0].annotate(f"best = final checkpoint (step {best_sft['best_step']})", (best_sft["best_step"], max(r["val_loss"] for r in ev)),
-                      xytext=(-6, 0), textcoords="offset points", fontsize=7, ha="right", va="top", color="grey")
-    ax[0, 0].set(title="(a) SFT loss", xlabel="optimizer step", ylabel="response-token NLL")
-    ax[0, 0].legend(fontsize=8)
-    key["sft"] = {"val_loss_step0": ev[0]["val_loss"], "val_loss_final": ev[-1]["val_loss"],
-                  "val_loss_min": min(r["val_loss"] for r in ev), "steps": tr[-1]["step"], "train_minutes": best_sft["train_minutes"]}
-    panels = (("loss", "val_loss", "train_loss", "(b) DPO loss"), ("acc", "val_reward_acc", "train_reward_acc", "(c) DPO reward accuracy"),
-              ("margin", "val_reward_margin", "train_reward_margin", "(d) DPO reward margin"))
-    summaries = {n: js(root / f"results/dpo_{n}/summary.json") for n, p in dpo.items() if p.exists()}
-    for a, (kind, vkey, tkey, title) in zip((ax[0, 1], ax[1, 0], ax[1, 1]), panels):
-        for name, path in dpo.items():
-            if not path.exists():
-                continue
-            rows = jl(path)
-            t = [r for r in rows if r["type"] == "train"]
-            e = [r for r in rows if r["type"] == "eval"]
-            a.plot([r["step"] for r in t], smooth([r[tkey] for r in t]), color=colors[name], alpha=0.35, lw=1.4)
-            a.plot([r["step"] for r in e if r["step"] > 0], [r[vkey] for r in e if r["step"] > 0], "o-", color=colors[name], label=f"{name.upper()}-DPO validation")
-            first = e[0]
-            a.plot([first["step"]], [first[vkey]], "o", mfc="white", color=colors[name])
-            best = next(r for r in e if r["step"] == summaries[name]["best_step"])
-            a.plot([best["step"]], [best[vkey]], "*", ms=15, color=colors[name], mec="black", zorder=5)
-        a.set(title=title, xlabel="optimizer step")
-        if kind == "acc":
-            a.annotate("step 0: policy = reference,\nstrict r_w > r_l fires on float noise", (0, 0.1), fontsize=7, xytext=(25, 25), textcoords="offset points",
-                       arrowprops=dict(arrowstyle="-", color="grey"))
-        handles = [plt.Line2D([], [], color=colors[n], marker="o", label=f"{n.upper()}-DPO validation") for n in dpo if (root / f"results/dpo_{n}/metrics.jsonl").exists()]
-        handles += [plt.Line2D([], [], color="grey", alpha=0.5, label="train (5-point mean)"), plt.Line2D([], [], color="grey", marker="*", ls="", ms=11, mec="black", label="checkpoint kept")]
-        a.legend(handles=handles, fontsize=7)
+    colors = {"sft": "tab:green", "hh": "tab:blue", "uf": "tab:orange"}
+    rc = {"font.size": 7.5, "axes.titlesize": 8.5, "axes.labelsize": 7.5, "xtick.labelsize": 7, "ytick.labelsize": 7,
+          "axes.linewidth": 0.6, "lines.linewidth": 1.2, "lines.markersize": 3.5}
+    with plt.rc_context(rc):
+        fig, ax = plt.subplots(2, 2, figsize=(7.0, 5.0))
+        recs = jl(sft)
+        tr = [r for r in recs if r["type"] == "train"]
+        ev = [r for r in recs if r["type"] == "eval"]
+        best_sft = js(root / "results/sft/summary.json")
+        a = ax[0, 0]
+        a.plot([r["step"] for r in tr], smooth([r["train_loss"] for r in tr]), color=colors["sft"], alpha=0.35, lw=1.4)
+        a.plot([r["step"] for r in ev if r["step"] > 0], [r["val_loss"] for r in ev if r["step"] > 0], "o-", color=colors["sft"])
+        a.plot([ev[0]["step"]], [ev[0]["val_loss"]], "o", mfc="white", color=colors["sft"])
+        kept = next(r for r in ev if r["step"] == best_sft["best_step"])
+        a.plot([kept["step"]], [kept["val_loss"]], "*", ms=11, color=colors["sft"], mec="black", zorder=5)
+        a.set(title="(a) SFT loss", xlabel="optimizer step", ylabel="response-token NLL")
+        key["sft"] = {"val_loss_step0": ev[0]["val_loss"], "val_loss_final": ev[-1]["val_loss"],
+                      "val_loss_min": min(r["val_loss"] for r in ev), "steps": tr[-1]["step"], "train_minutes": best_sft["train_minutes"]}
+        panels = (("loss", "val_loss", "train_loss", "(b) DPO loss", "DPO loss"),
+                  ("acc", "val_reward_acc", "train_reward_acc", "(c) DPO reward accuracy", "reward accuracy"),
+                  ("margin", "val_reward_margin", "train_reward_margin", "(d) DPO reward margin", "reward margin"))
+        summaries = {n: js(root / f"results/dpo_{n}/summary.json") for n, p in dpo.items() if p.exists()}
+        for a, (kind, vkey, tkey, title, ylabel) in zip((ax[0, 1], ax[1, 0], ax[1, 1]), panels):
+            for name, path in dpo.items():
+                if not path.exists():
+                    continue
+                rows = jl(path)
+                t = [r for r in rows if r["type"] == "train"]
+                e = [r for r in rows if r["type"] == "eval"]
+                a.plot([r["step"] for r in t], smooth([r[tkey] for r in t]), color=colors[name], alpha=0.35, lw=1.4)
+                a.plot([r["step"] for r in e if r["step"] > 0], [r[vkey] for r in e if r["step"] > 0], "o-", color=colors[name])
+                first = e[0]
+                a.plot([first["step"]], [first[vkey]], "o", mfc="white", color=colors[name])
+                best = next(r for r in e if r["step"] == summaries[name]["best_step"])
+                a.plot([best["step"]], [best[vkey]], "*", ms=11, color=colors[name], mec="black", zorder=5)
+            a.set(title=title, xlabel="optimizer step", ylabel=ylabel)
+            if kind == "acc":
+                a.annotate("step 0: policy = reference,\nthe strict comparison fires on float noise", (0, 0.12), fontsize=6.5,
+                           xytext=(22, 18), textcoords="offset points", arrowprops=dict(arrowstyle="-", color="grey", lw=0.6))
+        for a in ax.flat:
+            a.grid(alpha=0.2, lw=0.5)
+        handles = [plt.Line2D([], [], color=colors[n], lw=2, label=lab) for n, lab in (("sft", "SFT"), ("hh", "HH-RLHF DPO"), ("uf", "UltraFeedback DPO"))]
+        handles += [plt.Line2D([], [], color="grey", alpha=0.5, lw=1.6, label="training (5-point moving average)"),
+                    plt.Line2D([], [], color="grey", marker="o", lw=1, label="validation"),
+                    plt.Line2D([], [], color="grey", marker="o", mfc="white", ls="", label="step 0 (before training)"),
+                    plt.Line2D([], [], color="grey", marker="*", ls="", ms=9, mec="black", label="checkpoint kept")]
+        fig.legend(handles=handles, loc="lower center", ncol=4, fontsize=6.8, frameon=False, columnspacing=1.4, handletextpad=0.5)
+        fig.tight_layout(rect=(0, 0.085, 1, 1), h_pad=1.0, w_pad=1.0)
+        fig.savefig(out / "fig_training.png", dpi=300)
+        plt.close(fig)
     for name, path in dpo.items():
         if path.exists():
             e = [r for r in jl(path) if r["type"] == "eval"]
@@ -111,11 +123,6 @@ def fig_training(root, out, key):
                                   "val_acc_best": max(r["val_reward_acc"] for r in e), "best_step": summaries[name]["best_step"],
                                   "val_margin_final": e[-1]["val_reward_margin"], "val_loss_final": e[-1]["val_loss"],
                                   "max_abs_reward_step0": e[0].get("val_max_abs_reward"), "train_minutes": summaries[name]["train_minutes"]}
-    fig.text(0.5, 0.005, "Train: one value per optimizer step (SFT 32 examples, DPO 32 pairs), logged every 10 (SFT) / 5 (DPO) steps, then a 5-point moving average. "
-             "Validation: 1,000 pairs (DPO) every 100 steps.", ha="center", fontsize=7.5, color="dimgray")
-    fig.tight_layout(rect=(0, 0.02, 1, 1))
-    fig.savefig(out / "fig_training.png", dpi=170)
-    plt.close(fig)
 
 
 def table_config(root, out):
@@ -308,7 +315,7 @@ def table_lora(root, out, key, ctx):
 
     rows = [["base (no adapter)", "-", "-", "-", "-", "-", eos(base_stats["heldout22"]), loops(base_stats["heldout22"]), "-",
              eos(base_stats["eval40"]), loops(base_stats["eval40"]), "-", "-"]]
-    points, summary = [], {}
+    points, summary, tex_runs = [], {}, []
     for r in sweep:
         run = r["run"]
         s40, s22 = stats_of(f"persona_{run}.json"), stats_of(f"persona_heldout_{run}.json")
@@ -322,12 +329,18 @@ def table_lora(root, out, key, ctx):
         rows.append([run, r["rpo_alpha"], r["epochs"], r["lr"], r["optimizer_steps"], r["val_margin"],
                      eos(s22), loops(s22), wtl22, eos(s40), loops(s40), wtl40, state])
         summary[run] = {"heldout22": {"stats": s22, "style_wtl": wtl22}, "eval40": {"stats": s40, "style_wtl": wtl40}, "filter": state}
+        tex_runs.append({"run": run, "rank": int(r["rank"]), "lr": float(r["lr"]), "epochs": float(r["epochs"]), "beta": float(r["beta"]),
+                         "rpo_alpha": float(r["rpo_alpha"]), "margin": float(r["val_margin"]), "eos22": eos(s22), "wtl22": wtl22,
+                         "eos40": eos(s40), "loops40": loops(s40), "loops22": loops(s22), "wtl40": wtl40, "state": state, "selected": run == ctx["selected"]})
         if s40 and s22 and score22 is not None and score40 is not None:
             name = run_label(r)
             points.append((run, score22, s22["hit_eos"] / s22["n"], score40, s40["hit_eos"] / s40["n"], name))
     (out / "table_lora_sweep.md").write_text(md_table(
         ["run", "rpo alpha", "epochs", "lr", "steps", "val margin", "held-out: EOS of 22", "held-out: repeated-phrase outputs",
          "held-out: style W/T/L", "required: EOS of 40", "required: repeated-phrase outputs", "required: style W/T/L", "degeneration filter"], rows))
+    report_extras.tex_lora_sweep(out, {"eos40": eos(base_stats["eval40"]), "loops40": loops(base_stats["eval40"]),
+                                          "eos22": eos(base_stats["heldout22"]), "loops22": loops(base_stats["heldout22"])}, tex_runs)
+    report_extras.tex_deviations(root, out, tex_runs)
     key["persona"] = {"selected": ctx["selected"], "strongest": ctx["strongest"], "style_shift_significant": ctx["significant"],
                       "runs": summary}
     if points:

@@ -1,4 +1,5 @@
 import json
+import math
 import re
 import statistics
 from collections import Counter
@@ -126,8 +127,8 @@ def table_data(root, out):
     (out / "table_data.md").write_text(md_table(["track", "source (train split / validation split)", "train / validation", "filtering", "mean tokens"], rows))
 
 
-def sci(x):
-    mantissa, exponent = f"{x:.0e}".split("e")
+def sci(x, places=0):
+    mantissa, exponent = f"{x:.{places}e}".split("e")
     return rf"${mantissa}\times10^{{{int(exponent)}}}$"
 
 
@@ -299,11 +300,13 @@ def table_deviations(root, out):
          "the incomplete last accumulation group is dropped", "implementation"],
         ["SFT", "training examples", "30,000 single-turn examples", "30,000 that fit in 512 tokens",
          f"{n(sm['train']['skipped_too_long'])} longer rows skipped so every kept example keeps its EOS label", "data"],
+        ["SFT", "validation batch size", "not specified", f"{s['eval_batch_size']} (8 at first)",
+         "validation ran out of memory on the T4; validation loss is an exact token mean, so the batch size changes no value", "resource"],
         ["SFT", "AdamW betas", "not specified", f"({s['adam_beta1']}, {s['adam_beta2']})", "not tuned", "design"],
         ["HH / UF DPO", "optimizer steps", "15,000 / 32 = 468.75 (implied)", f"{sh['optimizer_steps']}", "the incomplete last accumulation group is dropped",
          "implementation"],
         ["HH / UF DPO", "reference model precision", "may be loaded in fp16", "fp32 weights under fp16 autocast, on the second GPU",
-         "the second T4 had room, and policy and reference then start numerically identical", "resource"],
+         "the second T4 had room, and policy and reference then start numerically identical", "design"],
         ["HH / UF DPO", "optimizer", "RMSprop or AdamW", f"AdamW, betas ({h['adam_beta1']}, {h['adam_beta2']}), weight decay {h['weight_decay']:g}",
          "not tuned", "design"],
         ["HH / UF DPO", "checkpoint selection", "best validation reward accuracy",
@@ -328,6 +331,84 @@ def table_deviations(root, out):
     for stage, items in same.items():
         text += f"- {stage}: {', '.join(items)}\n"
     (out / "table_deviations.md").write_text(text)
+
+
+def peak_memory(root, run, key):
+    return max(r[key] for r in jl(root / f"results/{run}/metrics.jsonl") if r["type"] == "train")
+
+
+def step0_reward(root, run):
+    return next(r for r in jl(root / f"results/{run}/metrics.jsonl") if r["type"] == "eval" and r["step"] == 0)["val_max_abs_reward"]
+
+
+def tex_lora_sweep(out, base, runs):
+    loss = lambda r: "DPO + NLL" if r["rpo_alpha"] > 0 else (rf"DPO, $\beta={r['beta']:g}$" if abs(r["beta"] - 0.1) > 1e-9 else "DPO")
+    verdict = {"ok": "pass", "degenerate": "fail", "-": "-"}
+    rows = [[r"\multicolumn{5}{@{}l}{Base model, no adapter}", base["eos40"], str(base["loops40"]), base["eos22"], str(base["loops22"]), "-", "-"]]
+    for r in runs:
+        state = r["state"].replace(" (selected)", "")
+        cells = [str(r["rank"]), sci(r["lr"]), f"{r['epochs']:g}", loss(r), f"{r['margin']:.2f}", r["eos40"], str(r["loops40"]), r["eos22"], str(r["loops22"]),
+                 r["wtl40"], verdict[state] + (" (selected)" if r["selected"] else "")]
+        if r["selected"]:
+            cells[0] = r"\rowcolor{accent!10}" + cells[0]
+        rows.append(cells)
+    centered = r">{\centering\arraybackslash}"
+    spec = "".join(centered + f"p{{{w}}}" for w in ("0.8cm", "1.4cm", "1.0cm", "1.9cm", "1.2cm", "1.2cm", "1.2cm", "1.2cm", "1.2cm", "1.7cm")) + r">{\raggedright\arraybackslash}X"
+    header = ["Rank", "Learning rate", "Epochs", "Loss", "Val. margin", "EOS of 40", "Loops of 40", "EOS of 22", "Loops of 22", "Style W/T/L", "Filter"]
+    (out / "table_lora_sweep.tex").write_text(latex_tabular(header, rows, spec, size=r"\footnotesize", tabcolsep="3pt"))
+
+
+def tex_deviations(root, out, runs):
+    try:
+        sft = js(root / "results/sft/config.json")
+        manifest = js(root / "results/sft/sft_data_manifest.json")["train"]
+        lo = js(root / "results/lora/final_config.json")
+        sft_peak = peak_memory(root, "sft", "peak_mem_gb")
+        ref_peaks = [peak_memory(root, n, "peak_mem_ref_gb") for n in ("dpo_hh", "dpo_uf")]
+        zero = {n: step0_reward(root, f"dpo_{n}") for n in ("hh", "uf")}
+    except FileNotFoundError as e:
+        print("skip tex_deviations:", e)
+        return
+    by = {r["run"]: r for r in runs}
+    plain, nll, e10, r8 = by["r16_lr5e-5"], by["r16_lr5e-5_rpo1"], by["r16_lr5e-5_e10"], by["r8_lr5e-5"]
+    lr = {name: by[name] for name in ("r16_lr1e-5", "r16_lr7e-5", "r16_lr1e-4", "r16_lr2e-4")}
+    micro = math.ceil(lo["n_train"] / lo["per_device_batch_size"])
+    updates = math.ceil(micro / lo["grad_accum"])
+    doubled = math.ceil(micro / (2 * lo["grad_accum"]))
+    band = lambda text: [rf"\rowcolor{{accent!8}}\multicolumn{{4}}{{@{{}}l}}{{\textbf{{{text}}}}}"]
+    rows = [
+        band("Resource-driven"),
+        ["SFT validation batch", "not specified", f"{sft['eval_batch_size']}, down from 8",
+         f"Validation ran out of memory on the T4 while training peaked at {sft_peak:.1f} GB, so I halved the batch and set the "
+         "expandable-segments allocator. Validation loss is an exact token mean, so this changes no value."],
+        band("Data and implementation choices"),
+        ["Long SFT examples", "truncate to the maximum length",
+         f"skip rows over {sft['max_length']} tokens ({manifest['skipped_too_long']:,} of {manifest['seen']:,} seen) until {sft['n_train']:,} fit",
+         "Truncation would cut the EOS label, so the model would never learn to stop. I did not test truncation and cannot say what it would change."],
+        ["DPO reference precision", "fp16 allowed", "fp32 weights under fp16 autocast",
+         f"The reference needed only {min(ref_peaks):.1f}--{max(ref_peaks):.1f} GB on its own T4, so I could afford fp32. Policy and reference "
+         f"then start identical: the largest absolute implicit reward at step 0 was {sci(zero['hh'], 1)} (HH-RLHF) and {sci(zero['uf'], 1)} (UltraFeedback)."],
+        band("Performance-driven (LoRA persona task, where the guide leaves these settings to me)"),
+        ["Loss", "plain DPO", "DPO plus NLL on the chosen answer, weight 1",
+         f"Plain DPO at {sci(5e-5)} left no persona on the required prompts (style {plain['wtl40']}). Adding NLL gave small, mixed changes: held-out EOS "
+         f"{plain['eos22']} to {nll['eos22']}, held-out style {plain['wtl22']} to {nll['wtl22']}, required EOS {plain['eos40']} to {nll['eos40']}."],
+        ["Learning rate", "my choice", sci(lo["lr"]),
+         rf"Swept {sci(1e-5)} to {sci(2e-4)} (Table~\ref{{tab:lorasweep}}). The margin barely moved at {sci(1e-5)} ({lr['r16_lr1e-5']['margin']:.2f}), "
+         f"while required-prompt EOS fell from {plain['eos40']} at {sci(5e-5)} to {lr['r16_lr7e-5']['eos40']} at {sci(7e-5)}, "
+         f"{lr['r16_lr1e-4']['eos40']} at {sci(1e-4)}, and {lr['r16_lr2e-4']['eos40']} at {sci(2e-4)}."],
+        ["Epochs", "my choice", f"{lo['epochs']:g}",
+         f"Ten epochs at {sci(5e-5)} gave the strongest plain-DPO style ({e10['wtl40']}), but EOS fell to {e10['eos40']} on the required prompts and the filter rejected it."],
+        ["Rank", "my choice", f"{lo['lora_r']} (alpha {lo['lora_alpha']})",
+         f"At {sci(5e-5)}, rank 8 reached about half the validation margin of rank {lo['lora_r']} ({r8['margin']:.2f} against {plain['margin']:.2f}); "
+         "both reached accuracy 1.0. I did not try rank 8 at a higher rate."],
+        ["Targets and batch", "my choice",
+         rf"all seven linear projections; {lo['per_device_batch_size']} $\times$ {lo['grad_accum']} = {lo['effective_batch_size']}",
+         f"I did not ablate either. All linear layers give the adapter capacity in attention and MLP, and a batch of {lo['effective_batch_size']} gives "
+         f"{updates} updates per epoch on {lo['n_train']} pairs, where {2 * lo['effective_batch_size']} would give {doubled}."],
+    ]
+    left = r">{\raggedright\arraybackslash}"
+    spec = left + "p{2.3cm}" + left + "p{2.5cm}" + left + "p{3.1cm}" + left + "X"
+    (out / "table_deviations.tex").write_text(latex_tabular(["Setting", "Guide", "Mine", "Reason and effect"], rows, spec, size=r"\footnotesize", tabcolsep="3pt"))
 
 
 def fig_dpo_rewards(root, out):

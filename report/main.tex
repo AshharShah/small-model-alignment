@@ -46,6 +46,9 @@
 \titleformat{\subsection}{\sffamily\normalsize\bfseries\color{accent}}{\thesubsection}{0.6em}{}
 \titlespacing*{\section}{0pt}{1.4ex plus 0.3ex minus 0.2ex}{0.7ex plus 0.1ex}
 \titlespacing*{\subsection}{0pt}{1.1ex plus 0.2ex minus 0.2ex}{0.5ex plus 0.1ex}
+\titleformat{\paragraph}[runin]{\normalfont\normalsize\bfseries}{}{0pt}{}
+\titlespacing*{\paragraph}{0pt}{1.2ex plus 0.2ex minus 0.1ex}{0.6em}
+\hyphenation{UltraFeedback}
 
 \captionsetup{font=small,labelfont={bf,sf},labelsep=period,skip=4pt}
 \setlist{nosep,leftmargin=1.4em}
@@ -70,6 +73,10 @@
 \input{sections/01_repo_data}
 
 \input{sections/02_config}
+
+\input{sections/03_deviations}
+
+\input{sections/04_training}
 
 {\small\setlength{\bibsep}{1.5pt}\bibliographystyle{unsrtnat}\bibliography{references}}
 

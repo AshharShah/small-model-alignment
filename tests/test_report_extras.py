@@ -171,3 +171,44 @@ def test_config_table_reports_the_submitted_values_for_all_four_runs(tmp_path):
 
 def test_sci_formats_learning_rates_for_latex():
     assert rx.sci(2e-5) == r"$2\times10^{-5}$" and rx.sci(1e-6) == r"$1\times10^{-6}$"
+
+
+def sweep_run(run, rank=16, lr=5e-5, epochs=3.0, beta=0.1, rpo_alpha=0.0, margin=1.0, eos40="40/40", eos22="-", wtl40="-", state="-", selected=False):
+    return {"run": run, "rank": rank, "lr": lr, "epochs": epochs, "beta": beta, "rpo_alpha": rpo_alpha, "margin": margin, "eos22": eos22,
+            "wtl22": "-", "eos40": eos40, "loops40": 11, "loops22": "-", "wtl40": wtl40, "state": state, "selected": selected}
+
+
+def test_sci_keeps_requested_decimals():
+    assert rx.sci(2.44e-5, 1) == r"$2.4\times10^{-5}$" and rx.sci(4.27e-5, 1) == r"$4.3\times10^{-5}$"
+
+
+def test_lora_sweep_table_shades_the_selected_adapter_and_marks_unscored_runs(tmp_path):
+    base = {"eos40": "37/40", "loops40": 11, "eos22": "22/22", "loops22": 2}
+    runs = [sweep_run("a", lr=1e-5, margin=0.124),
+            sweep_run("b", eos22="19/22", wtl40="0/40/0", state="degenerate"),
+            sweep_run("c", rpo_alpha=1.0, eos22="20/22", wtl40="0/40/0", state="ok (selected)", selected=True),
+            sweep_run("d", lr=1e-4, beta=0.3)]
+    rx.tex_lora_sweep(tmp_path, base, runs)
+    text = (tmp_path / "table_lora_sweep.tex").read_text()
+    assert text.count(r"\\") == 1 + 1 + len(runs)
+    assert text.count(r"\rowcolor") == 1 and "pass (selected)" in text and text.count("fail") == 1
+    assert r"DPO, $\beta=0.3$" in text and "DPO + NLL" in text and "0.12" in text
+    assert "Base model, no adapter} & 37/40 & 11 & 22/22 & 2" in text
+
+
+def test_deviation_table_separates_resource_data_and_performance_changes(tmp_path):
+    runs = [sweep_run("r16_lr5e-5", margin=1.0169, eos22="19/22", wtl40="0/40/0"),
+            sweep_run("r16_lr5e-5_rpo1", rpo_alpha=1.0, eos22="20/22", eos40="35/40"),
+            sweep_run("r16_lr5e-5_e10", epochs=10.0, eos40="11/40", wtl40="9/31/0"),
+            sweep_run("r8_lr5e-5", rank=8, margin=0.5165),
+            sweep_run("r16_lr1e-5", lr=1e-5, margin=0.124),
+            sweep_run("r16_lr7e-5", lr=7e-5, eos40="31/40"),
+            sweep_run("r16_lr1e-4", lr=1e-4, eos40="30/40"),
+            sweep_run("r16_lr2e-4", lr=2e-4, eos40="2/40")]
+    rx.tex_deviations(ROOT, tmp_path, runs)
+    text = (tmp_path / "table_deviations.tex").read_text()
+    for needle in ("Resource-driven", "Data and implementation choices", "Performance-driven", "12.8 GB", "21,560 of 51,565 seen", "3.4--4.2 GB",
+                   r"$2.4\times10^{-5}$", r"$4.3\times10^{-5}$", "13 updates per epoch", "where 32 would give 7", "4, down from 8",
+                   "31/40 at", "2/40 at", "0.52 against 1.02", r"Table~\ref{tab:lorasweep}"):
+        assert needle in text, needle
+    assert text.count(r"\rowcolor") == 3 and text.count(r"\\") == 12

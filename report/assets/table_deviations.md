@@ -2,9 +2,10 @@
 |---|---|---|---|---|---|
 | SFT | optimizer steps | 30,000 / 32 = 937.5 (implied) | 937 (29,984 examples) | the incomplete last accumulation group is dropped | implementation |
 | SFT | training examples | 30,000 single-turn examples | 30,000 that fit in 512 tokens | 21,560 longer rows skipped so every kept example keeps its EOS label | data |
+| SFT | validation batch size | not specified | 4 (8 at first) | validation ran out of memory on the T4; validation loss is an exact token mean, so the batch size changes no value | resource |
 | SFT | AdamW betas | not specified | (0.9, 0.95) | not tuned | design |
 | HH / UF DPO | optimizer steps | 15,000 / 32 = 468.75 (implied) | 468 | the incomplete last accumulation group is dropped | implementation |
-| HH / UF DPO | reference model precision | may be loaded in fp16 | fp32 weights under fp16 autocast, on the second GPU | the second T4 had room, and policy and reference then start numerically identical | resource |
+| HH / UF DPO | reference model precision | may be loaded in fp16 | fp32 weights under fp16 autocast, on the second GPU | the second T4 had room, and policy and reference then start numerically identical | design |
 | HH / UF DPO | optimizer | RMSprop or AdamW | AdamW, betas (0.9, 0.95), weight decay 0 | not tuned | design |
 | HH / UF DPO | checkpoint selection | best validation reward accuracy | best validation reward accuracy (ties: lower loss): HH step 400, UF step 468 | validated every 100 steps and at the end | as guide |
 | UltraFeedback DPO | validation pairs | 1,000 | 1,000 (27 from train rows not used for training) | the test split has too few usable single-turn pairs | data |

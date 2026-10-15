@@ -1,7 +1,7 @@
 \section{Experimental Configuration}
 \label{sec:config}
 
-Table~\ref{tab:config} reports the values I used for the four submitted checkpoints, not the guide defaults. I generated every number in it from the saved configuration file of the matching run, so the table describes the submitted checkpoints exactly. I trained on Kaggle T4 GPUs, with the DPO policy on one GPU and its frozen reference on the other.
+I used the configurations shown in Table~\ref{tab:config} for the four submitted checkpoints. Rather than relying on the default settings in the training guides, I extracted each value from the saved configuration file of its corresponding run. This ensures that the table reflects the actual settings I used to produce the submitted checkpoints. I ran the experiments on Kaggle T4 GPUs, assigning one GPU to the DPO policy and the other to its frozen reference model.
 
 \begin{table}[H]
 \centering
@@ -10,8 +10,9 @@ Table~\ref{tab:config} reports the values I used for the four submitted checkpoi
 \input{assets/table_config}
 \end{table}
 
-SFT and both DPO runs share the same optimizer, gradient clipping, maximum length, and seed. The two DPO runs differ only in their data: they start from the same SFT checkpoint, which also serves as their frozen reference. I kept the checkpoint with the best validation reward accuracy, which was step 400 of 468 for HH-RLHF and the final step for UltraFeedback. The best SFT checkpoint is also the final one (step 937).
+I kept the optimizer, gradient clipping, maximum sequence length, and random seed consistent across SFT and both DPO runs. For the two DPO experiments, I started from the same SFT checkpoint and used it as the frozen reference model. I then selected the checkpoint with the highest validation reward accuracy for each run. For HH-RLHF, this was step 400 out of 468, while for UltraFeedback, it was the final training step. The final SFT checkpoint, at step 937, also had the lowest validation loss, so I used it in the subsequent experiments.
 
-The LoRA run differs in more than the data. It trains a LoRA adapter on SmolLM2 with TRL's \texttt{DPOTrainer}, using a larger learning rate, a smaller batch, and an extra negative log-likelihood (NLL) term on the chosen answer. The next section explains why I added that term.
+The LoRA experiment followed a different configuration. Instead of using the same setup as the other DPO runs, I trained a LoRA adapter on SmolLM2 with TRL's \texttt{DPOTrainer}. I used a higher learning rate and a smaller batch size, and I added a negative log-likelihood (NLL) term to the loss to encourage the model to generate the chosen answer. I explain the motivation for this additional term in the next section.
 
-\paragraph{Generation.} Every evaluation used greedy decoding (\texttt{do\_sample=False}), so temperature and top-p do not apply. I generated up to 512 new tokens with repetition penalty 1.0, length penalty 1.0, and no n-gram blocking, and I used identical settings for SFT and DPO within each comparison so that the judge compares models, not decoding policies. The Qwen runs use the plain prompt template from Section~\ref{sec:data}, and the SmolLM2 runs use the model's chat template.
+\paragraph{Generation.}
+I used greedy decoding for every evaluation by setting \texttt{do\_sample=False}. Since the models did not sample from the output distribution, temperature and top-p settings did not affect generation. I allowed each model to generate up to 512 new tokens and used a repetition penalty of 1.0, a length penalty of 1.0, and no n-gram blocking. Within each comparison, I kept the generation settings identical for SFT and DPO so that differences in the judge's evaluations would reflect the models' outputs rather than differences in decoding strategies. I used the plain prompt template described in Section~\ref{sec:data} for the Qwen runs and the model's chat template for the SmolLM2 runs. The only exception to these settings is the decoding sensitivity check in the results section, where I repeated two comparisons with a repetition penalty of 1.1 for both models.

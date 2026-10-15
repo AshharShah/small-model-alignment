@@ -8,6 +8,7 @@ check: main.pdf
 	@pages=$$(pdfinfo main.pdf | awk '/^Pages:/ {print $$2}'); \
 	if grep -q '^\\coverpagetrue' main.tex; then content=$$((pages-1)); else content=$$pages; fi; \
 	echo "$$pages pages in total, $$content counted against the 8-page limit"; \
+	if grep -q "undefined" main.log; then echo "main.log still has undefined references"; exit 1; fi; \
 	[ $$content -le 8 ]
 
 clean:

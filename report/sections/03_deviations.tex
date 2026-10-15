@@ -1,0 +1,22 @@
+\section{Parameter Choices and Deviations}
+\label{sec:deviations}
+
+For SFT and both DPO runs, I kept the guide recipe wherever nothing forced a change. Every headline hyperparameter in the guide tables matches what I used. For SFT, that means a batch of 2 with 16 accumulation steps, a learning rate of $2\times10^{-5}$, 3\% warmup with cosine decay, weight decay 0.1, clipping at 1.0, and one epoch. For DPO, it means one pair per device with 32 accumulation steps, a fixed learning rate of $1\times10^{-6}$, $\beta=0.1$, clipping at 1.0, one epoch, a 512-token context, and a 256-token prompt limit. Table~\ref{tab:deviations} lists every other change and separates the ones that resource limits forced from the ones that performance evidence drove.
+
+\begin{table}[H]
+\centering
+\caption{Changes from the guide, grouped by what drove them. ``My choice'' means the guide leaves the setting to me.}
+\label{tab:deviations}
+\input{assets/table_deviations}
+\end{table}
+
+Memory never forced me to change a training hyperparameter: SFT and DPO ran at the guide batch sizes on the T4s without gradient checkpointing. I also dropped the incomplete last accumulation group, which left out 16 SFT examples and 24 DPO pairs, so the runs took 937 and 468 steps instead of the 937.5 and 468.75 that the guide implies.
+
+\paragraph{LoRA adapter selection.} I trained 12 adapters (Table~\ref{tab:lorasweep}). Before I scored any adapter on the held-out prompts, I fixed the selection rule. An adapter fails if, on either prompt set, its EOS rate falls by more than 10 points or its repeated-phrase rate rises by more than 10 points relative to the base model. Among the adapters that pass, I take the highest held-out style score. Only one of the six adapters I scored passed, so I selected rank 16, a learning rate of $5\times10^{-5}$, three epochs, and the NLL term. That choice has a cost: the adapters that move the persona style most all fail the filter, and the one that passes barely moves it. I report both in the results section.
+
+\begin{table}[!t]
+\centering
+\caption{All 12 adapters I trained for the persona task. The EOS of 40, loops of 40, and style columns use the 40 required prompts. The EOS of 22 and loops of 22 columns use the 22 held-out prompts, which I scored for six adapters. EOS counts answers that end on their own, loops counts answers with a repeated phrase, and Style W/T/L is the judge's persona-style win, tie, and loss count against the base model. The filter applies the 10-point rule to both prompt sets. A dash means I did not score that adapter, and shading marks the selected one.}
+\label{tab:lorasweep}
+\input{assets/table_lora_sweep}
+\end{table}

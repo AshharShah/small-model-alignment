@@ -18,12 +18,16 @@ def test_assets_build_from_the_committed_results(tmp_path, monkeypatch):
             "fig_winrates.png", "fig_training.png", "key_numbers.json", "table_data.md", "table_eval_sets.md", "table_deviations.md",
             "table_judge_reliability.md", "table_judge_consistency.md", "table_judge_bias.md", "table_hh_categories.md",
             "table_alpaca_sources.md", "table_hh_refusals.md", "fig_dpo_rewards.png", "fig_lora_training.png", "fig_lengths.png",
-            "fig_hh_categories.png", "examples.md", "examples_persona.md", "index.md", "table_data.tex", "table_eval_sets.tex"} <= names
+            "fig_hh_categories.png", "examples.md", "examples_persona.md", "index.md", "table_data.tex", "table_eval_sets.tex", "table_deviations.tex", "table_lora_sweep.tex"} <= names
     selection = json.loads((ROOT / "results/lora/v2/persona_v2_selection.json").read_text())
     key = json.loads((tmp_path / "key_numbers.json").read_text())
     assert key["persona"]["selected"] == selection["selected"]
     sweep = (tmp_path / "table_lora_sweep.md").read_text()
     assert sweep.count("(selected)") == 1 and selection["selected"] in sweep
+    sweep_tex = (tmp_path / "table_lora_sweep.tex").read_text()
+    assert sweep_tex.count("(selected)") == 1 and sweep_tex.count(r"\\") == 1 + 1 + 12
+    deviations = (tmp_path / "table_deviations.md").read_text()
+    assert "validation batch size" in deviations and "| resource |" in deviations
     judge = (tmp_path / "table_judge.md").read_text()
     assert "POSITIVE CONTROL" in judge and "(selected)" in judge
     assert "win rate (ties = 1/2)" in judge and "Judge: google/gemini-3.6-flash" in judge and "excluded from both win rates" in judge

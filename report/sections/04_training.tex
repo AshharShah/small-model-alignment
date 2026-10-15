@@ -1,0 +1,25 @@
+\section{Training Behavior}
+\label{sec:training}
+
+Figure~\ref{fig:training} shows the SFT run and both DPO runs. The training curves are noisy, so I rely on the validation measurements to judge convergence: 1,000 held-out examples for SFT and 1,000 held-out preference pairs for each DPO run.
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\textwidth]{assets/fig_training.png}
+\caption{Training curves for SFT (a) and both DPO runs (b--d). Thin faded lines show training metrics, which I logged every 10 optimizer steps (SFT) or every 5 (DPO) and smoothed with a 5-point moving average. Dots show validation metrics at every 100 steps and at the last step. Hollow dots mark step 0, before any update, and stars mark the checkpoint I kept. In (c), the step-0 accuracy is an artifact: the policy equals the reference, so the two rewards differ only by floating-point noise.}
+\label{fig:training}
+\end{figure}
+
+\paragraph{SFT.} Validation loss rose slightly from 1.350 at step 0 to 1.374 at step 200, then fell at every later evaluation to 1.324 at step 937 (perplexity 3.86 to 3.76). It never turned upward, so one epoch showed no sign of overfitting, and the best checkpoint is the final one. The overall improvement is small, about 2\%.
+
+\paragraph{DPO.} Both runs start at a loss of $\ln 2 \approx 0.693$, which is the value when the policy equals the reference. HH-RLHF improves slowly: validation loss reaches 0.630, reward accuracy creeps from 0.60 to 0.64, and the reward margin grows from 0.14 to 0.25. UltraFeedback separates its pairs much more easily: validation loss falls to 0.560, accuracy rises from 0.68 to 0.71, and the margin grows from 0.36 to 0.63. The UltraFeedback margin was still rising when the epoch ended, so the run had not converged.
+
+\paragraph{Checkpoint selection.} I kept the checkpoint with the highest validation reward accuracy: step 400 (0.644) for HH-RLHF and the final step (0.706) for UltraFeedback. For HH-RLHF, step 400 beats the final step 468 (0.636) by only 0.8 points, which is smaller than the roughly 1.5-point binomial standard error of either number, and validation loss is marginally lower at step 468 (0.630 versus 0.633). I therefore treat the two checkpoints as equivalent, and I see step 400 as a tie-break, not as evidence of overfitting.
+
+\paragraph{Stability.} No run diverged, and validation loss never turned upward. The only instability was fp16 overflow early in both DPO runs. The loss scaler halved three times, from 65,536 to 8,192, within the first 175 steps of the HH-RLHF run and the first 120 of the UltraFeedback run, so I infer that it skipped three of the 468 updates in each run. After that the scale stayed constant, and SFT never overflowed. Gradient norms before clipping were 3.7 to 5.9 for SFT and 32 to 68 for DPO, so clipping at 1.0 was active at every logged step.
+
+\paragraph{Implicit rewards.} On the validation pairs, the implicit rewards of both the chosen and the rejected answers fell below zero in both DPO runs (final values: $-0.30$ and $-0.55$ for HH-RLHF, $-0.12$ and $-0.75$ for UltraFeedback). The margin grows because the policy lowers the probability of rejected answers more than that of chosen answers, not because it raises the probability of chosen ones. Relative to the SFT reference, both DPO policies therefore assign lower probability to both kinds of answers. The repository holds the full plot as \path{report/assets/fig_dpo_rewards.png}.
+
+\paragraph{LoRA.} The LoRA persona run has only 39 updates on 198 pairs, so it shows no meaningful convergence curve, and its 22 validation pairs give a coarse signal. The selected adapter reaches a validation reward accuracy of 1.0 with a margin of 0.96. That shows it separates the persona answer from the plain one, but it does not show that its generations change style. The repository holds the curves for the whole LoRA sweep as \path{report/assets/fig_lora_training.png}.
+
+None of these curves measures response quality. Loss, reward accuracy, and margin describe how well each model separates pairs from its own preference data, so I judge the checkpoints on generated responses, as the next section reports.
