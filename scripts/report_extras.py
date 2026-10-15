@@ -428,7 +428,8 @@ def table_decoding_sensitivity(root, out):
                 setting = penalty_text(root, models[1][1] + suffix) + (" (main)" if not suffix else "")
                 s = sj.stats(load_judged(root, fn + suffix))
                 p = s["sign_test_p"]
-                verdicts.append([label, setting, wtl(s), rate_ci(s), "-" if p is None else ("<0.001" if p < 0.001 else f"{p:.3f}"), s["unknown"]])
+                verdicts.append([label, setting, wtl(s), rate_ci(s), f"{s['win_rate_ties_half']:.3f}",
+                                 "-" if p is None else ("<0.001" if p < 0.001 else f"{p:.3f}"), s["unknown"]])
                 for name, stem in models:
                     res = js(g / f"{stem}{suffix}.json")
                     toks = [r["num_new_tokens"] for r in res]
@@ -438,7 +439,7 @@ def table_decoding_sensitivity(root, out):
         print("skip table_decoding_sensitivity: repetition-penalty runs not available")
         return
     text = "Same models, prompts, batch composition and judge; only the repetition penalty changes.\n\n"
-    text += md_table(["comparison", "decoding", "W/T/L", "win rate (no ties) [95% CI]", "sign-test p", "unknown"], verdicts)
+    text += md_table(["comparison", "decoding", "W/T/L", "win rate (ties excluded) [95% CI]", "win rate (ties = 1/2)", "sign-test p", "unknown"], verdicts)
     text += "\n" + md_table(["model", "eval set", "decoding", "ended with EOS", "hit 512-token cap", "mean tokens", "repeated-phrase outputs"], behaviour)
     (out / "table_decoding_sensitivity.md").write_text(text)
 

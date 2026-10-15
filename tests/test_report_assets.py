@@ -26,6 +26,7 @@ def test_assets_build_from_the_committed_results(tmp_path, monkeypatch):
     assert sweep.count("(selected)") == 1 and selection["selected"] in sweep
     judge = (tmp_path / "table_judge.md").read_text()
     assert "POSITIVE CONTROL" in judge and "(selected)" in judge
+    assert "win rate (ties = 1/2)" in judge and "Judge: google/gemini-3.6-flash" in judge and "excluded from both win rates" in judge
     config = (tmp_path / "table_config.md").read_text()
     assert "generation settings (evaluation)" in config and "rpo_alpha" in config
 

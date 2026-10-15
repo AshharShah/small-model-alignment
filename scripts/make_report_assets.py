@@ -39,8 +39,8 @@ def judged_row(root, fn):
     lo, hi = s["wilson95_excl_ties"]
     blank = lambda x: "" if x is None else x
     return {"n": s["n"], "wins": s["wins"], "ties": s["ties"], "losses": s["losses"], "unknown": s["unknown"],
-            "win_rate_excl_ties": blank(s["win_rate_excl_ties"]), "ci_low": blank(lo), "ci_high": blank(hi),
-            "sign_test_p": blank(s["sign_test_p"])}
+            "win_rate_excl_ties": blank(s["win_rate_excl_ties"]), "win_rate_ties_half": blank(s["win_rate_ties_half"]),
+            "ci_low": blank(lo), "ci_high": blank(hi), "sign_test_p": blank(s["sign_test_p"])}
 
 
 def decoding_text(root, generation_file, template):
@@ -219,6 +219,17 @@ def persona_rows(ctx):
     return rows
 
 
+def judge_note(root):
+    p = root / "results/judgments/dpo_uf_vs_sft_alpaca300_judged.jsonl.summary.json"
+    if not p.exists():
+        return ""
+    m = js(p)
+    return (f"\nJudge: {m['judge_model_used']} through the Kaggle model proxy, {m['batch_size']} pairs per request, {m['sleep_seconds']:g} s between attempts, "
+            f"up to {m['max_retries']} attempts per batch, then the pairs of a failed batch one at a time. A verdict that stayed invalid after that is recorded "
+            "as unknown, excluded from both win rates and logged in a failure file (see the reliability table). Win rate (ties excluded) = wins / (wins + losses); "
+            "win rate (ties = 1/2) = (wins + ties / 2) / (wins + ties + losses). Pairs with identical outputs count as ties without being sent to the judge.\n")
+
+
 def table_judge(root, out, key, ctx):
     p = root / "results/judgments/results_overview.csv"
     if not p.exists():
@@ -233,13 +244,16 @@ def table_judge(root, out, key, ctx):
             continue
         ci = f"[{fmt(r['ci_low'])}, {fmt(r['ci_high'])}]" if r["ci_low"] not in ("", "None") else "-"
         pv = "<0.001" if r["sign_test_p"] not in ("", "None") and float(r["sign_test_p"]) < 0.001 else fmt(r["sign_test_p"])
-        table.append([label, r["n"], r["wins"], r["ties"], r["losses"], r["unknown"], fmt(r["win_rate_excl_ties"]), ci, pv])
+        table.append([label, r["n"], r["wins"], r["ties"], r["losses"], r["unknown"], fmt(r["win_rate_excl_ties"]),
+                      fmt(r.get("win_rate_ties_half")), ci, pv])
         if (r["win_rate_excl_ties"] not in ("", "None") and "swapped" not in fn and "control" not in fn
                 and "plainrubric" not in fn and "persona22" not in fn):
             bars.append((label, float(r["win_rate_excl_ties"]), float(r["ci_low"]), float(r["ci_high"])))
         key.setdefault("judge", {})[fn] = {k: r[k] for k in ("wins", "ties", "losses", "unknown", "win_rate_excl_ties", "sign_test_p")}
-    (out / "table_judge.md").write_text(md_table(
-        ["comparison (model under test vs reference)", "n", "win", "tie", "loss", "unk", "win rate (no ties)", "95% CI", "sign-test p"], table))
+    text = md_table(["comparison (model under test vs reference)", "n", "win", "tie", "loss", "unk", "win rate (ties excluded)",
+                     "win rate (ties = 1/2)", "95% CI (ties excluded)", "sign-test p"], table)
+    text += judge_note(root)
+    (out / "table_judge.md").write_text(text)
     if bars:
         bars = [(l.replace(" vs base,", ":").replace(", 40 required prompts", " (n=40)"), w, lo, hi) for l, w, lo, hi in bars]
         fig, ax = plt.subplots(figsize=(10.5, 0.55 * len(bars) + 1.2))
