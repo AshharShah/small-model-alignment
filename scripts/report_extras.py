@@ -140,16 +140,16 @@ def tex_data(root, out):
     rows = [
         ["SFT", rf"UltraChat-200k~\citep{{ding2023ultrachat}} {split(sft)}", f"{n(sft['train']['n'])} / {n(sft['val']['n'])}",
          rf"first user--assistant turn only; prompt + response + EOS $\le$ {sft['max_length']} tokens "
-         f"({n(sft['train']['skipped_too_long'])} of {n(sft['train']['seen'])} train rows dropped)"],
+         f"(this limit drops {n(sft['train']['skipped_too_long'])} of {n(sft['train']['seen'])} train rows)"],
         ["HH-RLHF DPO", rf"HH-RLHF~\citep{{bai2022hh}} {split(hh)}", f"{n(hh['train']['n'])} / {n(hh['val']['n'])}",
-         f"single-turn only ({n(hh['train']['skipped_not_single_turn'])} multi-turn rows dropped); {limits(hh)} "
-         f"({n(hh['train']['skipped_too_long'])} dropped)"],
+         f"single-turn only (drops {n(hh['train']['skipped_not_single_turn'])} multi-turn rows); {limits(hh)} "
+         f"(drops {n(hh['train']['skipped_too_long'])} more)"],
         ["UltraFeedback DPO", rf"UltraFeedback, binarized~\citep{{cui2023ultrafeedback,tunstall2023zephyr}} {split(uf)}",
          rf"{n(uf['train']['n'])} / {n(uf['val']['n'])}$^\dagger$",
-         rf"single-turn only; chosen score $>$ rejected ({n(uf['train']['skipped_tie_or_reversed_score'])} ties dropped); same length limits "
-         rf"({n(uf['train']['skipped_too_long'])} dropped)"],
+         rf"single-turn only; chosen score $>$ rejected (drops {n(uf['train']['skipped_tie_or_reversed_score'])} ties); same length limits "
+         rf"(drops {n(uf['train']['skipped_too_long'])} more)"],
         ["LoRA persona DPO", rf"provided {tt('ramsay_style_preferences.json')}", f"{lo['n_train']} / {lo['n_val']}",
-         f"none; seeded shuffle (seed {lo['seed']}), {lo['n_val']} rows held out"],
+         f"none; a seeded shuffle (seed {lo['seed']}) holds out {lo['n_val']} rows"],
     ]
     spec = f"{RAGGED}p{{2.15cm}}{RAGGED}p{{4.3cm}}p{{2.2cm}}{RAGGED}X"
     (out / "table_data.tex").write_text(latex_tabular(["Track", "Source (train / validation split)", "Train / val", "Filtering"], rows, spec))
@@ -171,11 +171,11 @@ def tex_eval_sets(root, out):
     rows = [
         ["AlpacaEval-300", str(len(alp)), rf"random subset (seed 42) of the 805 AlpacaEval prompts~\citep{{dubois2024lc}}: {sources}",
          r"SFT vs.\ DPO-UF (main), DPO-HH (alignment tax)"],
-        ["HH-eval-300", str(len(hh)), f"synthetic helpful/harmless set provided with the assignment; {even(hh_c)}",
+        ["HH-eval-300", str(len(hh)), f"synthetic helpful/harmless set from the assignment; {even(hh_c)}",
          r"SFT vs.\ DPO-HH (main), DPO-UF (alignment tax)"],
-        ["Persona-40", str(len(per)), f"hand-written, {even(per_c)} (cooking, coding, general help, safety-sensitive); disjoint from the training prompts",
+        ["Persona-40", str(len(per)), f"hand-written; {even(per_c)} (cooking, coding, general help, safety-sensitive); no overlap with the training prompts",
          r"LoRA adapters vs.\ base model (test)"],
-        ["Held-out-22", str(len(held)), "validation rows of the persona data, never trained on", "LoRA adapter selection (dev)"],
+        ["Held-out-22", str(len(held)), "validation rows of the persona data that no training run used", "LoRA adapter selection (dev)"],
     ]
     spec = f"{RAGGED}p{{2.3cm}}r{RAGGED}X{RAGGED}p{{4.1cm}}"
     (out / "table_eval_sets.tex").write_text(latex_tabular(["Evaluation set", "Prompts", "Composition", "Used for"], rows, spec))

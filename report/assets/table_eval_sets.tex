@@ -4,9 +4,9 @@
 Evaluation set & Prompts & Composition & Used for \\
 \midrule
 AlpacaEval-300 & 300 & random subset (seed 42) of the 805 AlpacaEval prompts~\citep{dubois2024lc}: self-instruct 95, Koala 60, OASST 54, helpful\_base 51, Vicuna 40 & SFT vs.\ DPO-UF (main), DPO-HH (alignment tax) \\
-HH-eval-300 & 300 & synthetic helpful/harmless set provided with the assignment; 10 categories $\times$ 30 prompts & SFT vs.\ DPO-HH (main), DPO-UF (alignment tax) \\
-Persona-40 & 40 & hand-written, 4 categories $\times$ 10 prompts (cooking, coding, general help, safety-sensitive); disjoint from the training prompts & LoRA adapters vs.\ base model (test) \\
-Held-out-22 & 22 & validation rows of the persona data, never trained on & LoRA adapter selection (dev) \\
+HH-eval-300 & 300 & synthetic helpful/harmless set from the assignment; 10 categories $\times$ 30 prompts & SFT vs.\ DPO-HH (main), DPO-UF (alignment tax) \\
+Persona-40 & 40 & hand-written; 4 categories $\times$ 10 prompts (cooking, coding, general help, safety-sensitive); no overlap with the training prompts & LoRA adapters vs.\ base model (test) \\
+Held-out-22 & 22 & validation rows of the persona data that no training run used & LoRA adapter selection (dev) \\
 \bottomrule
 \end{tabularx}
 \endgroup
