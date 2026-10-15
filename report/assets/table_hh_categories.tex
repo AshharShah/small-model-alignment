@@ -1,0 +1,19 @@
+\begingroup\footnotesize\setlength{\tabcolsep}{3pt}\renewcommand{\arraystretch}{1.12}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X>{\centering\arraybackslash}p{0.7cm}>{\centering\arraybackslash}p{1.5cm}>{\centering\arraybackslash}p{2.6cm}>{\centering\arraybackslash}p{1.5cm}>{\centering\arraybackslash}p{2.6cm}>{\centering\arraybackslash}p{2.5cm}}
+\toprule
+HH-eval category & n & DPO-HH W/T/L & DPO-HH win rate [95\% CI] & DPO-UF W/T/L & DPO-UF win rate [95\% CI] & Refusal phrases SFT / HH / UF \\
+\midrule
+hate or harassment & 30 & 13/14/3 & 0.81 [0.57, 0.93] & 5/19/5 & 0.50 [0.24, 0.76] & 0.00 / 0.00 / 0.00 \\
+calibration and uncertainty & 30 & 16/8/6 & 0.73 [0.52, 0.87] & 5/6/19 & 0.21 [0.09, 0.40] & 0.00 / 0.00 / 0.00 \\
+cyber abuse & 30 & 13/11/6 & 0.68 [0.46, 0.85] & 13/10/7 & 0.65 [0.43, 0.82] & 0.03 / 0.03 / 0.00 \\
+harmful instructions & 30 & 15/6/9 & 0.62 [0.43, 0.79] & 4/14/12 & 0.25 [0.10, 0.49] & 0.00 / 0.00 / 0.00 \\
+safe transformation & 30 & 13/9/8 & 0.62 [0.41, 0.79] & 19/2/8 & 0.70 [0.52, 0.84] & 0.00 / 0.03 / 0.03 \\
+legal financial safety & 30 & 15/3/12 & 0.56 [0.37, 0.72] & 7/5/18 & 0.28 [0.14, 0.48] & 0.07 / 0.00 / 0.07 \\
+medical safety & 30 & 13/6/11 & 0.54 [0.35, 0.72] & 10/2/18 & 0.36 [0.21, 0.54] & 0.07 / 0.00 / 0.03 \\
+benign helpfulness & 30 & 16/0/14 & 0.53 [0.36, 0.70] & 15/1/14 & 0.52 [0.34, 0.69] & 0.03 / 0.00 / 0.20 \\
+privacy and doxxing & 30 & 9/13/8 & 0.53 [0.31, 0.74] & 8/6/16 & 0.33 [0.18, 0.53] & 0.03 / 0.00 / 0.03 \\
+self harm support & 30 & 14/0/16 & 0.47 [0.30, 0.64] & 10/3/17 & 0.37 [0.22, 0.56] & 0.20 / 0.40 / 0.00 \\
+\textbf{all categories} & 300 & 137/70/93 & 0.60 [0.53, 0.66] & 96/68/134 & 0.42 [0.36, 0.48] & 0.04 / 0.05 / 0.04 \\
+\bottomrule
+\end{tabularx}
+\endgroup

@@ -1,4 +1,4 @@
-main.pdf: main.tex sections/*.tex
+main.pdf: main.tex references.bib sections/*.tex assets/*.tex assets/*.png
 	pdflatex -interaction=nonstopmode -halt-on-error main.tex
 	@if grep -q '\\bibdata' main.aux; then bibtex main; fi
 	pdflatex -interaction=nonstopmode -halt-on-error main.tex

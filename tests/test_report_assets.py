@@ -18,7 +18,7 @@ def test_assets_build_from_the_committed_results(tmp_path, monkeypatch):
             "fig_winrates.png", "fig_training.png", "key_numbers.json", "table_data.md", "table_eval_sets.md", "table_deviations.md",
             "table_judge_reliability.md", "table_judge_consistency.md", "table_judge_bias.md", "table_hh_categories.md",
             "table_alpaca_sources.md", "table_hh_refusals.md", "fig_dpo_rewards.png", "fig_lora_training.png", "fig_lengths.png",
-            "fig_hh_categories.png", "examples.md", "examples_persona.md", "index.md", "table_data.tex", "table_eval_sets.tex", "table_deviations.tex", "table_lora_sweep.tex", "table_dpo_results.tex", "table_lora_results.tex"} <= names
+            "fig_hh_categories.png", "examples.md", "examples_persona.md", "index.md", "table_data.tex", "table_eval_sets.tex", "table_deviations.tex", "table_lora_sweep.tex", "table_dpo_results.tex", "table_lora_results.tex", "table_hh_categories.tex", "table_examples.tex"} <= names
     selection = json.loads((ROOT / "results/lora/v2/persona_v2_selection.json").read_text())
     key = json.loads((tmp_path / "key_numbers.json").read_text())
     assert key["persona"]["selected"] == selection["selected"]

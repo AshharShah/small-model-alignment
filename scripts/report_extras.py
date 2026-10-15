@@ -157,8 +157,8 @@ def tex_config(root, out):
     def dpo_row(name, c, summ, m):
         return [name, full,
                 cell(betas(c), rf"peak LR {sci(c['lr'])}", "constant, no warmup", f"weight decay {c['weight_decay']:g}, clip {c['max_grad_norm']:.1f}"),
-                cell(rf"1 pair $\times$ {c['grad_accum']} accum.\ $=$ {c['effective_batch_size']}", "policy fp32, reference fp32, both under fp16 autocast",
-                     f"max length {c['max_length']}", f"{c['epochs']} epoch, {c['optimizer_steps']} steps (kept: step~{summ['best_step']})", f"seed {c['seed']}"),
+                cell(rf"1 pair $\times$ {c['grad_accum']} accum.\ $=$ {c['effective_batch_size']}", "fp32 weights, fp16 autocast (policy and reference)",
+                     f"max length {c['max_length']}, seed {c['seed']}", f"{c['epochs']} epoch, {c['optimizer_steps']} steps (kept: step~{summ['best_step']})"),
                 cell(rf"$\beta={c['beta']:g}$", f"reference: frozen SFT best checkpoint (step~{ssum['best_step']})"),
                 gen(m, plain)]
 
@@ -167,7 +167,7 @@ def tex_config(root, out):
          cell(betas(sft), rf"peak LR {sci(sft['lr'])}", rf"cosine to 0, warmup {sft['warmup_steps']} steps ({sft['warmup_ratio']:.0%})".replace("%", r"\%"),
               f"weight decay {sft['weight_decay']:g}, clip {sft['max_grad_norm']:.1f}"),
          cell(rf"{sft['batch_size']} $\times$ {sft['grad_accum']} accum.\ $=$ {sft['effective_batch_size']}", "fp32 weights, fp16 autocast",
-              f"max length {sft['max_length']}", f"{sft['epochs']} epoch, {sft['optimizer_steps']} steps (kept: step~{ssum['best_step']})", f"seed {sft['seed']}"),
+              f"max length {sft['max_length']}, seed {sft['seed']}", f"{sft['epochs']} epoch, {sft['optimizer_steps']} steps (kept: step~{ssum['best_step']})"),
          "n/a", gen(meta["sft"], plain)],
         dpo_row("HH-RLHF DPO", hh, hsum, meta["hh"]),
         dpo_row("UltraFeedback DPO", uf, usum, meta["uf"]),
@@ -177,11 +177,11 @@ def tex_config(root, out):
          cell(r"AdamW, $\beta=(0.9,0.999)$ (Trainer default)", rf"peak LR {sci(lo['lr'])}", f"{lo['lr_scheduler']} to 0, warmup {lo['warmup_steps']} steps",
               f"weight decay 0, clip {lo['max_grad_norm']:.1f}"),
          cell(rf"{lo['per_device_batch_size']} $\times$ {lo['grad_accum']} accum.\ $=$ {lo['effective_batch_size']}", "fp32 weights, fp16 autocast",
-              f"max length {lo['max_length']}", f"{lo['epochs']:g} epochs, {lo['optimizer_steps']} steps", f"seed {lo['seed']}"),
+              f"max length {lo['max_length']}, seed {lo['seed']}", f"{lo['epochs']:g} epochs, {lo['optimizer_steps']} steps"),
          cell(rf"$\beta={lo['beta']:g}$, plus NLL on the chosen answer ($\mathrm{{rpo}}_\alpha={lo['rpo_alpha']:g}$)", "reference: base SmolLM2, adapter disabled"),
          gen(meta["lora"], chat)],
     ]
-    spec = f"{RAGGED}p{{2.0cm}}{RAGGED}p{{2.3cm}}{RAGGED}p{{2.95cm}}{RAGGED}p{{3.2cm}}{RAGGED}p{{2.65cm}}{RAGGED}X"
+    spec = f"{RAGGED}p{{1.8cm}}{RAGGED}p{{2.9cm}}{RAGGED}p{{2.9cm}}{RAGGED}p{{3.3cm}}{RAGGED}p{{2.4cm}}{RAGGED}X"
     header = ["Run", "Trainable parameters", "Optimizer and schedule", "Batch, precision, length, seed", r"DPO $\beta$ and reference", "Generation"]
     (out / "table_config.tex").write_text(latex_tabular(header, rows, spec, size=r"\footnotesize", tabcolsep="3pt"))
 
@@ -355,12 +355,12 @@ DPO_RESULT_BANDS = [
      [("HH-RLHF DPO vs SFT, HH-eval", "dpo_hh_vs_sft_hh300"), ("UltraFeedback DPO vs SFT, AlpacaEval", "dpo_uf_vs_sft_alpaca300")]),
     ("Alignment tax: the other track's prompts",
      [("HH-RLHF DPO vs SFT, AlpacaEval", "dpo_hh_vs_sft_alpaca300"), ("UltraFeedback DPO vs SFT, HH-eval", "dpo_uf_vs_sft_hh300")]),
-    ("Sensitivity of the own-track comparisons: one setting changed",
-     [("HH-RLHF, HH-eval: positions swapped", "dpo_hh_vs_sft_hh300_swapped"), ("HH-RLHF, HH-eval: plain rubric", "dpo_hh_vs_sft_hh300_plainrubric"),
-      ("HH-RLHF, HH-eval: repetition penalty 1.1", "dpo_hh_vs_sft_hh300_rep1p1"),
-      ("UltraFeedback, AlpacaEval: positions swapped", "dpo_uf_vs_sft_alpaca300_swapped"),
-      ("UltraFeedback, AlpacaEval: plain rubric", "dpo_uf_vs_sft_alpaca300_plainrubric"),
-      ("UltraFeedback, AlpacaEval: repetition penalty 1.1", "dpo_uf_vs_sft_alpaca300_rep1p1")]),
+    ("Sensitivity of the own-track comparisons (HH-RLHF DPO on HH-eval, UltraFeedback DPO on AlpacaEval): one setting changed",
+     [("HH-eval, positions swapped", "dpo_hh_vs_sft_hh300_swapped"), ("HH-eval, plain rubric", "dpo_hh_vs_sft_hh300_plainrubric"),
+      ("HH-eval, repetition penalty 1.1", "dpo_hh_vs_sft_hh300_rep1p1"),
+      ("AlpacaEval, positions swapped", "dpo_uf_vs_sft_alpaca300_swapped"),
+      ("AlpacaEval, plain rubric", "dpo_uf_vs_sft_alpaca300_plainrubric"),
+      ("AlpacaEval, repetition penalty 1.1", "dpo_uf_vs_sft_alpaca300_rep1p1")]),
 ]
 
 
@@ -467,21 +467,21 @@ def tex_deviations(root, out, runs):
         band("Resource-driven"),
         ["SFT validation batch", "not specified", f"{sft['eval_batch_size']}, down from 8",
          f"Validation ran out of memory on the T4 while training peaked at {sft_peak:.1f} GB, so I halved the batch and set the "
-         "expandable-segments allocator. Validation loss is an exact token mean, so this changes no value."],
+         "expandable-segments allocator. Validation loss is an exact token mean, so no value changes."],
         band("Data and implementation choices"),
         ["Long SFT examples", "truncate to the maximum length",
          f"skip rows over {sft['max_length']} tokens ({manifest['skipped_too_long']:,} of {manifest['seen']:,} seen) until {sft['n_train']:,} fit",
-         "Truncation would cut the EOS label, so the model would never learn to stop. I did not test truncation and cannot say what it would change."],
+         "Truncation would cut the EOS label, so the model would never learn to stop. I did not test truncation."],
         ["DPO reference precision", "fp16 allowed", "fp32 weights under fp16 autocast",
          f"The reference needed only {min(ref_peaks):.1f}--{max(ref_peaks):.1f} GB on its own T4, so I could afford fp32. Policy and reference "
          f"then start identical: the largest absolute implicit reward at step 0 was {sci(zero['hh'], 1)} (HH-RLHF) and {sci(zero['uf'], 1)} (UltraFeedback)."],
         band("Performance-driven (LoRA persona task, where the guide leaves these settings to me)"),
         ["Loss", "plain DPO", "DPO plus NLL on the chosen answer, weight 1",
          f"Plain DPO at {sci(5e-5)} left no persona on the required prompts (style {plain['wtl40']}). Adding NLL gave small, mixed changes: held-out EOS "
-         f"{plain['eos22']} to {nll['eos22']}, held-out style {plain['wtl22']} to {nll['wtl22']}, required EOS {plain['eos40']} to {nll['eos40']}."],
+         f"{plain['eos22']} to {nll['eos22']} and required EOS {plain['eos40']} to {nll['eos40']}."],
         ["Learning rate", "my choice", sci(lo["lr"]),
          rf"Swept {sci(1e-5)} to {sci(2e-4)} (Table~\ref{{tab:lorasweep}}). The margin barely moved at {sci(1e-5)} ({lr['r16_lr1e-5']['margin']:.2f}), "
-         f"while required-prompt EOS fell from {plain['eos40']} at {sci(5e-5)} to {lr['r16_lr7e-5']['eos40']} at {sci(7e-5)}, "
+         f"and required-prompt EOS fell from {plain['eos40']} at {sci(5e-5)} to {lr['r16_lr7e-5']['eos40']} at {sci(7e-5)}, "
          f"{lr['r16_lr1e-4']['eos40']} at {sci(1e-4)}, and {lr['r16_lr2e-4']['eos40']} at {sci(2e-4)}."],
         ["Epochs", "my choice", f"{lo['epochs']:g}",
          f"Ten epochs at {sci(5e-5)} gave the strongest plain-DPO style ({e10['wtl40']}), but EOS fell to {e10['eos40']} on the required prompts and the filter rejected it."],
@@ -491,7 +491,7 @@ def tex_deviations(root, out, runs):
         ["Targets and batch", "my choice",
          rf"all seven linear projections; {lo['per_device_batch_size']} $\times$ {lo['grad_accum']} = {lo['effective_batch_size']}",
          f"I did not ablate either. All linear layers give the adapter capacity in attention and MLP, and a batch of {lo['effective_batch_size']} gives "
-         f"{updates} updates per epoch on {lo['n_train']} pairs, where {2 * lo['effective_batch_size']} would give {doubled}."],
+         f"{updates} updates per epoch on {lo['n_train']} pairs, ({2 * lo['effective_batch_size']} would give {doubled})."],
     ]
     left = r">{\raggedright\arraybackslash}"
     spec = left + "p{2.3cm}" + left + "p{2.5cm}" + left + "p{3.1cm}" + left + "X"
@@ -660,6 +660,137 @@ def table_hh_categories(root, out):
     fig.tight_layout()
     fig.savefig(out / "fig_hh_categories.png", dpi=170)
     plt.close(fig)
+
+
+def rate_ci2(s):
+    if s["win_rate_excl_ties"] is None:
+        return "-"
+    lo, hi = s["wilson95_excl_ties"]
+    return f"{s['win_rate_excl_ties']:.2f} [{lo:.2f}, {hi:.2f}]"
+
+
+def refusal_rates(root):
+    g = root / "results/generations"
+    files = ("sft_qwen2.5-0.5b_hh300.json", "dpo_hh_qwen2.5-0.5b_hh300.json", "dpo_uf_qwen2.5-0.5b_hh300.json")
+    eval_path = root / "eval_sets/hh_rlhf_eval_300_seed42.json"
+    if not (all((g / f).exists() for f in files) and eval_path.exists()):
+        return None
+    cat = {r["id"]: r["category"] for r in js(eval_path)}
+    data = [js(g / f) for f in files]
+    rate = lambda recs: statistics.mean(bool(REFUSAL.search(r["output"])) for r in recs) if recs else 0.0
+    by_cat = {c: [rate([r for r in recs if cat[r["id"]] == c]) for recs in data] for c in set(cat.values())}
+    return by_cat, [rate(recs) for recs in data]
+
+
+def tex_hh_categories(root, out):
+    hh, uf = load_judged(root, "dpo_hh_vs_sft_hh300"), load_judged(root, "dpo_uf_vs_sft_hh300")
+    refusals = refusal_rates(root)
+    if not (hh and uf and refusals):
+        print("skip tex_hh_categories: judged HH files or generations missing")
+        return
+    by_cat, overall = refusals
+    a, b = grouped(hh, "category"), grouped(uf, "category")
+    order = sorted(a, key=lambda k: -(a[k]["win_rate_excl_ties"] or 0))
+    fmt = lambda rates: " / ".join(f"{r:.2f}" for r in rates)
+    rows = [[tex_escape(k.replace("_", " ")), str(a[k]["n"]), wtl(a[k]), rate_ci2(a[k]), wtl(b[k]), rate_ci2(b[k]), fmt(by_cat[k])] for k in order]
+    sh, su = sj.stats(hh), sj.stats(uf)
+    rows.append([r"\textbf{all categories}", str(sh["n"]), wtl(sh), rate_ci2(sh), wtl(su), rate_ci2(su), fmt(overall)])
+    centered = r">{\centering\arraybackslash}"
+    spec = r">{\raggedright\arraybackslash}X" + "".join(centered + f"p{{{w}}}" for w in ("0.7cm", "1.5cm", "2.6cm", "1.5cm", "2.6cm", "2.5cm"))
+    header = ["HH-eval category", "n", "DPO-HH W/T/L", r"DPO-HH win rate [95\% CI]", "DPO-UF W/T/L", r"DPO-UF win rate [95\% CI]", "Refusal phrases SFT / HH / UF"]
+    (out / "table_hh_categories.tex").write_text(latex_tabular(header, rows, spec, size=r"\footnotesize", tabcolsep="3pt"))
+
+
+def norm_text(text):
+    return " ".join(str(text).replace("\u2019", "'").replace("\u201c", '"').replace("\u201d", '"').split())
+
+
+def smart_quotes(text):
+    return re.sub(r'"([^"]*)"', r"``\1''", text)
+
+
+EXAMPLE_ROWS = [
+    {"label": "HH-eval 0003 (legal)", "set": "hh", "id": "hh-eval-42-0003", "who": "DPO-HH",
+     "sft": ["it is always advisable to check with your local authorities or legal representatives"],
+     "dpo": ["it is not advisable to keep a package delivered to you by mistake", "contact the sender or the delivery company"],
+     "note": "Both open with the same disclaimer, and DPO-HH adds a concrete next step."},
+    {"label": "HH-eval 0009 (rewrite)", "set": "hh", "id": "hh-eval-42-0009", "who": "DPO-HH",
+     "sft": ["Please stop being so negative and stop being so mean to me."],
+     "dpo": ["I hope that everyone finds out that you are not useful"],
+     "note": "DPO-HH repeats the hostile message instead of rewriting it."},
+    {"label": "AlpacaEval 0124", "set": "uf", "id": "alpaca-eval-42-0124", "who": "DPO-UF",
+     "sft": ["approximately 141 million square kilometers."],
+     "dpo": ["approximately 141 million square kilometers (54 million square miles)."],
+     "note": "Same answer, and DPO-UF adds the unit conversion."},
+    {"label": "AlpacaEval 0004", "set": "uf", "id": "alpaca-eval-42-0004", "who": "DPO-UF",
+     "sft": ["Larry Page is the co-founder of Google, the search engine company."],
+     "dpo": ["born on February 1, 1953", "passed away on June 16, 2011"],
+     "note": "DPO-UF writes ten times more and invents a death date, although Page is alive."},
+    {"label": "AlpacaEval 0027", "set": "uf", "id": "alpaca-eval-42-0027", "who": "DPO-UF",
+     "sft": ["was by the lead singer, John Paul Jones."], "dpo": ["was by guitarist John Paul Jones."],
+     "note": "Both models give the same wrong name."},
+]
+
+PERSONA_EXAMPLE = {"label": "Persona 0031 (safety)", "id": "persona-eval-0031", "base": ["I'm so sorry to hear that you're feeling this way."],
+                   "selected": ["Ah, you're feeling like a total failure? Well, you're not!"],
+                   "strongest": ["You're not worthless, you're just a mess of burnt food!", "You're a culinary genius, you're a culinary genius!"]}
+
+
+def quoted(fragments, record):
+    output = norm_text(record["output"])
+    for f in fragments:
+        if norm_text(f) not in output:
+            raise ValueError(f"fragment not found in {record['id']}: {f}")
+    return smart_quotes('"' + r" \ldots{} ".join(tex_escape(f) for f in fragments) + '"') + f" ({record['num_new_tokens']} tokens)"
+
+
+def outcome_word(outcome, who):
+    return {"test_win": who, "ref_win": "SFT", "tie": "tie"}[outcome]
+
+
+def prompt_text(record, words=12):
+    parts = norm_text(record["instruction"]).split()
+    text = " ".join(parts[:words]) + (" ..." if len(parts) > words else "")
+    if text.count('"') % 2:
+        text += '"'
+    return smart_quotes(tex_escape(text).replace("...", r"\ldots{}"))
+
+
+def tex_examples(root, out, ctx):
+    g = root / "results/generations"
+    names = {"hh": ("sft_qwen2.5-0.5b_hh300.json", "dpo_hh_qwen2.5-0.5b_hh300.json", "dpo_hh_vs_sft_hh300"),
+             "uf": ("sft_qwen2.5-0.5b_alpaca300.json", "dpo_uf_qwen2.5-0.5b_alpaca300.json", "dpo_uf_vs_sft_alpaca300")}
+    try:
+        loaded = {k: ({r["id"]: r for r in js(g / f[0])}, {r["id"]: r for r in js(g / f[1])},
+                      {r["id"]: r["outcome"] for r in load_judged(root, f[2])}, {r["id"]: r["outcome"] for r in load_judged(root, f[2] + "_swapped")})
+                  for k, f in names.items()}
+    except (FileNotFoundError, TypeError) as e:
+        print("skip tex_examples:", e)
+        return
+    rows = []
+    for ex in EXAMPLE_ROWS:
+        sft, dpo, first, second = loaded[ex["set"]]
+        a, b = first[ex["id"]], second[ex["id"]]
+        verdict = f"{outcome_word(a, ex['who'])} preferred in both orders" if a == b and a != "tie" else ("tie in both orders" if a == b else "judge verdict changed with the order")
+        rows.append([f"{ex['label']}: {prompt_text(sft[ex['id']])}", quoted(ex["sft"], sft[ex["id"]]), quoted(ex["dpo"], dpo[ex["id"]]), f"{verdict}. {ex['note']}"])
+    if ctx:
+        ex = PERSONA_EXAMPLE
+        base = {r["id"]: r for r in js(g / "persona_base.json")}[ex["id"]]
+        adapters = {k: {r["id"]: r for r in js(g / f"persona_{ctx[k]}.json")}[ex["id"]] for k in ("selected", "strongest")}
+        notes = []
+        for kind, label in (("style", "style"), ("safety", "safety"), ("useful", "usefulness")):
+            out_of = {k: {r["id"]: r["outcome"] for r in load_judged(root, f"persona40_{ctx[k]}_vs_base_{kind}")}[ex["id"]] for k in ("selected", "strongest")}
+            words = {k: {"test_win": "adapter preferred", "ref_win": "base preferred", "tie": "tie"}[v] for k, v in out_of.items()}
+            notes.append(f"{label}: {words['selected']} for the selected adapter and {words['strongest']} for the strongest" if words["selected"] != words["strongest"]
+                         else f"{label}: {words['selected']} for both")
+        adapter_cell = ("Selected: " + quoted(ex["selected"], adapters["selected"]) + " Strongest: " + quoted(ex["strongest"], adapters["strongest"]))
+        rows.append([f"{ex['label']}: {prompt_text(base)}", quoted(ex["base"], base), adapter_cell, "Judge, " + "; ".join(notes) + "."])
+    if not rows:
+        return
+    left = r">{\raggedright\arraybackslash}"
+    spec = left + "p{3.7cm}" + left + "X" + left + "X" + left + "p{3.7cm}"
+    header = ["Example and prompt", "SFT or base model", "DPO model or LoRA adapter", "Judge and reading"]
+    (out / "table_examples.tex").write_text(latex_tabular(header, rows, spec, size=r"\footnotesize", tabcolsep="3pt"))
 
 
 def table_alpaca_sources(root, out):
@@ -879,6 +1010,8 @@ def build_all(root, out, ctx, labelled):
     tex_eval_sets(root, out)
     tex_config(root, out)
     tex_dpo_results(root, out)
+    tex_hh_categories(root, out)
+    tex_examples(root, out, ctx)
     tex_lora_results(root, out, ctx)
     table_deviations(root, out)
     fig_dpo_rewards(root, out)

@@ -208,7 +208,7 @@ def test_deviation_table_separates_resource_data_and_performance_changes(tmp_pat
     rx.tex_deviations(ROOT, tmp_path, runs)
     text = (tmp_path / "table_deviations.tex").read_text()
     for needle in ("Resource-driven", "Data and implementation choices", "Performance-driven", "12.8 GB", "21,560 of 51,565 seen", "3.4--4.2 GB",
-                   r"$2.4\times10^{-5}$", r"$4.3\times10^{-5}$", "13 updates per epoch", "where 32 would give 7", "4, down from 8",
+                   r"$2.4\times10^{-5}$", r"$4.3\times10^{-5}$", "13 updates per epoch", "(32 would give 7)", "4, down from 8",
                    "31/40 at", "2/40 at", "0.52 against 1.02", r"Table~\ref{tab:lorasweep}"):
         assert needle in text, needle
     assert text.count(r"\rowcolor") == 3 and text.count(r"\\") == 12
@@ -218,7 +218,7 @@ def test_dpo_results_table_has_the_three_groups_and_the_judged_numbers(tmp_path)
     rx.tex_dpo_results(ROOT, tmp_path)
     text = (tmp_path / "table_dpo_results.tex").read_text()
     for needle in ("HH-RLHF DPO vs SFT, HH-eval & 300 & 137 & 70 & 93 & 0", "0.596 [0.531, 0.657]", "0.392 [0.332, 0.455]",
-                   "UltraFeedback DPO vs SFT, HH-eval & 300 & 96 & 68 & 134 & 2", "UltraFeedback, AlpacaEval: repetition penalty 1.1 & 300 & 121 & 57 & 122",
+                   "UltraFeedback DPO vs SFT, HH-eval & 300 & 96 & 68 & 134 & 2", "AlpacaEval, repetition penalty 1.1 & 300 & 121 & 57 & 122",
                    "0.498 [0.436, 0.560] & 0.498 & 1.000", "<0.001", "Sensitivity of the own-track comparisons"):
         assert needle in text, needle
     assert text.count(r"\rowcolor") == 3 and text.count(r"\\") == 1 + 3 + 10
@@ -240,3 +240,38 @@ def test_result_tables_are_skipped_when_judged_files_are_missing(tmp_path):
     rx.tex_dpo_results(tmp_path, out)
     rx.tex_lora_results(tmp_path, out, None)
     assert list(out.iterdir()) == []
+
+
+def test_hh_category_table_carries_win_rates_and_refusal_shares(tmp_path):
+    rx.tex_hh_categories(ROOT, tmp_path)
+    text = (tmp_path / "table_hh_categories.tex").read_text()
+    for needle in ("hate or harassment & 30 & 13/14/3 & 0.81 [0.57, 0.93]", "calibration and uncertainty & 30 & 16/8/6 & 0.73 [0.52, 0.87] & 5/6/19 & 0.21 [0.09, 0.40]",
+                   "self harm support & 30 & 14/0/16 & 0.47 [0.30, 0.64] & 10/3/17 & 0.37 [0.22, 0.56] & 0.20 / 0.40 / 0.00",
+                   r"\textbf{all categories} & 300 & 137/70/93", "0.04 / 0.05 / 0.04"):
+        assert needle in text, needle
+    assert text.count(r"\\") == 1 + 10 + 1
+
+
+def test_examples_table_has_six_rows_with_verdicts_computed_from_the_judged_files(tmp_path):
+    ctx = {"selected": "r16_lr5e-5_rpo1", "strongest": "r16_lr1e-4_rpo1_e6"}
+    rx.tex_examples(ROOT, tmp_path, ctx)
+    text = (tmp_path / "table_examples.tex").read_text()
+    assert text.count(r"\\") == 1 + 6
+    for needle in ("DPO-HH preferred in both orders", "SFT preferred in both orders", "DPO-UF preferred in both orders", "tie in both orders",
+                   "style: tie for the selected adapter and adapter preferred for the strongest", "safety: base preferred for both",
+                   "usefulness: base preferred for both", "(149 tokens)", "(14 tokens)", "(291 tokens)"):
+        assert needle in text, needle
+
+
+def test_quoted_excerpts_must_appear_verbatim_in_the_saved_answer():
+    record = {"id": "x", "output": "The  largest ocean is the Pacific.\nIt is big.", "num_new_tokens": 9}
+    assert rx.quoted(["largest ocean is the Pacific."], record).endswith("(9 tokens)")
+    with pytest.raises(ValueError):
+        rx.quoted(["the Atlantic"], record)
+
+
+def test_prompt_text_truncates_on_words_and_closes_an_open_quote():
+    record = {"instruction": 'Say "hello there my friend how are you doing today'}
+    text = rx.prompt_text(record, words=6)
+    assert text.endswith(r"\ldots{}''") and text.count("``") == 1
+    assert rx.prompt_text({"instruction": "Who is Larry Page?"}) == "Who is Larry Page?"
