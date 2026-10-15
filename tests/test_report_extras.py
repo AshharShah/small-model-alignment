@@ -157,3 +157,17 @@ def test_generated_tex_tables_carry_the_manifest_numbers(tmp_path):
     evals = (tmp_path / "table_eval_sets.tex").read_text()
     for needle in ("AlpacaEval-300", "self-instruct 95", "10 categories", "Held-out-22"):
         assert needle in evals, needle
+
+
+def test_config_table_reports_the_submitted_values_for_all_four_runs(tmp_path):
+    rx.tex_config(ROOT, tmp_path)
+    text = (tmp_path / "table_config.tex").read_text()
+    for needle in ("SFT &", "HH-RLHF DPO &", "UltraFeedback DPO &", "LoRA-DPO (TRL) &", "937 steps", "468 steps", "step~400", "step~468",
+                   r"$2\times10^{-5}$", r"$1\times10^{-6}$", r"$5\times10^{-5}$", "8,683,520 of 370,504,640", "repetition penalty 1.0",
+                   "SmolLM2 chat template", "n/a", r"rpo}_\alpha=1"):
+        assert needle in text, needle
+    assert text.count(r"\\") == 5
+
+
+def test_sci_formats_learning_rates_for_latex():
+    assert rx.sci(2e-5) == r"$2\times10^{-5}$" and rx.sci(1e-6) == r"$1\times10^{-6}$"

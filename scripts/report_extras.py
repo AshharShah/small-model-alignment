@@ -63,8 +63,9 @@ def tt(text):
     return r"\texttt{" + tex_escape(text).replace(r"\_", r"\_\allowbreak{}") + "}"
 
 
-def latex_tabular(header, rows, spec):
-    lines = [r"\begingroup\small\renewcommand{\arraystretch}{1.12}", rf"\begin{{tabularx}}{{\textwidth}}{{{spec}}}", r"\toprule",
+def latex_tabular(header, rows, spec, size=r"\small", tabcolsep=None):
+    pad = rf"\setlength{{\tabcolsep}}{{{tabcolsep}}}" if tabcolsep else ""
+    lines = [rf"\begingroup{size}{pad}\renewcommand{{\arraystretch}}{{1.12}}", rf"\begin{{tabularx}}{{\textwidth}}{{{spec}}}", r"\toprule",
              " & ".join(header) + r" \\", r"\midrule"]
     lines += [" & ".join(r) + r" \\" for r in rows]
     lines += [r"\bottomrule", r"\end{tabularx}", r"\endgroup"]
@@ -123,6 +124,65 @@ def table_data(root, out):
          f"none; seeded shuffle (seed {lo['seed']}), first {lo['n_val']} rows held out", "-"],
     ]
     (out / "table_data.md").write_text(md_table(["track", "source (train split / validation split)", "train / validation", "filtering", "mean tokens"], rows))
+
+
+def sci(x):
+    mantissa, exponent = f"{x:.0e}".split("e")
+    return rf"${mantissa}\times10^{{{int(exponent)}}}$"
+
+
+def cell(*lines):
+    return r"\newline ".join(lines)
+
+
+def tex_config(root, out):
+    try:
+        sft, hh, uf = (js(root / f"results/{n}/config.json") for n in ("sft", "dpo_hh", "dpo_uf"))
+        ssum, hsum, usum = (js(root / f"results/{n}/summary.json") for n in ("sft", "dpo_hh", "dpo_uf"))
+        lo = js(root / "results/lora/final_config.json")
+        meta = {k: js(root / f"results/generations/{f}.meta.json") for k, f in
+                (("sft", "sft_qwen2.5-0.5b_alpaca300"), ("hh", "dpo_hh_qwen2.5-0.5b_hh300"), ("uf", "dpo_uf_qwen2.5-0.5b_alpaca300"),
+                 ("lora", f"persona_{lo['run']}"))}
+    except FileNotFoundError as e:
+        print("skip tex_config:", e)
+        return
+    betas = lambda c: rf"AdamW, $\beta=({c['adam_beta1']:g},{c['adam_beta2']:g})$"
+    gen = lambda m, template: cell("greedy decoding", f"{m['decoding']['max_new_tokens']} new tokens", f"repetition penalty {m['decoding']['repetition_penalty']:.1f}",
+                                   "length penalty 1.0", template)
+    plain, chat = "plain prompt template", "SmolLM2 chat template"
+    targets = ", ".join(t.replace("_proj", "") for t in lo["target_modules"])
+    full = cell("full fine-tuning", "(all weights)")
+
+    def dpo_row(name, c, summ, m):
+        return [name, full,
+                cell(betas(c), rf"peak LR {sci(c['lr'])}", "constant, no warmup", f"weight decay {c['weight_decay']:g}, clip {c['max_grad_norm']:.1f}"),
+                cell(rf"1 pair $\times$ {c['grad_accum']} accum.\ $=$ {c['effective_batch_size']}", "policy fp32, reference fp32, both under fp16 autocast",
+                     f"max length {c['max_length']}", f"{c['epochs']} epoch, {c['optimizer_steps']} steps (kept: step~{summ['best_step']})", f"seed {c['seed']}"),
+                cell(rf"$\beta={c['beta']:g}$", f"reference: frozen SFT best checkpoint (step~{ssum['best_step']})"),
+                gen(m, plain)]
+
+    rows = [
+        ["SFT", full,
+         cell(betas(sft), rf"peak LR {sci(sft['lr'])}", rf"cosine to 0, warmup {sft['warmup_steps']} steps ({sft['warmup_ratio']:.0%})".replace("%", r"\%"),
+              f"weight decay {sft['weight_decay']:g}, clip {sft['max_grad_norm']:.1f}"),
+         cell(rf"{sft['batch_size']} $\times$ {sft['grad_accum']} accum.\ $=$ {sft['effective_batch_size']}", "fp32 weights, fp16 autocast",
+              f"max length {sft['max_length']}", f"{sft['epochs']} epoch, {sft['optimizer_steps']} steps (kept: step~{ssum['best_step']})", f"seed {sft['seed']}"),
+         "n/a", gen(meta["sft"], plain)],
+        dpo_row("HH-RLHF DPO", hh, hsum, meta["hh"]),
+        dpo_row("UltraFeedback DPO", uf, usum, meta["uf"]),
+        ["LoRA-DPO (TRL)",
+         cell(rf"LoRA $r={lo['lora_r']}$, $\alpha={lo['lora_alpha']}$, dropout {lo['lora_dropout']:g}", f"targets: {targets}",
+              f"{lo['trainable_params']:,} of {lo['total_params']:,} trainable ({lo['trainable_params'] / lo['total_params']:.2%})".replace("%", r"\%")),
+         cell(r"AdamW, $\beta=(0.9,0.999)$ (Trainer default)", rf"peak LR {sci(lo['lr'])}", f"{lo['lr_scheduler']} to 0, warmup {lo['warmup_steps']} steps",
+              f"weight decay 0, clip {lo['max_grad_norm']:.1f}"),
+         cell(rf"{lo['per_device_batch_size']} $\times$ {lo['grad_accum']} accum.\ $=$ {lo['effective_batch_size']}", "fp32 weights, fp16 autocast",
+              f"max length {lo['max_length']}", f"{lo['epochs']:g} epochs, {lo['optimizer_steps']} steps", f"seed {lo['seed']}"),
+         cell(rf"$\beta={lo['beta']:g}$, plus NLL on the chosen answer ($\mathrm{{rpo}}_\alpha={lo['rpo_alpha']:g}$)", "reference: base SmolLM2, adapter disabled"),
+         gen(meta["lora"], chat)],
+    ]
+    spec = f"{RAGGED}p{{2.0cm}}{RAGGED}p{{2.3cm}}{RAGGED}p{{2.95cm}}{RAGGED}p{{3.2cm}}{RAGGED}p{{2.65cm}}{RAGGED}X"
+    header = ["Run", "Trainable parameters", "Optimizer and schedule", "Batch, precision, length, seed", r"DPO $\beta$ and reference", "Generation"]
+    (out / "table_config.tex").write_text(latex_tabular(header, rows, spec, size=r"\footnotesize", tabcolsep="3pt"))
 
 
 def tex_data(root, out):
@@ -649,6 +709,7 @@ def build_all(root, out, ctx, labelled):
     table_eval_sets(root, out)
     tex_data(root, out)
     tex_eval_sets(root, out)
+    tex_config(root, out)
     table_deviations(root, out)
     fig_dpo_rewards(root, out)
     fig_lora_training(root, out, ctx)

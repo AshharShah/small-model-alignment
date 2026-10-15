@@ -1,0 +1,17 @@
+\section{Experimental Configuration}
+\label{sec:config}
+
+Table~\ref{tab:config} reports the values I used for the four submitted checkpoints, not the guide defaults. I generated every number in it from the saved configuration file of the matching run, so the table describes the submitted checkpoints exactly. I trained on Kaggle T4 GPUs, with the DPO policy on one GPU and its frozen reference on the other.
+
+\begin{table}[H]
+\centering
+\caption{Configuration of the four submitted checkpoints. ``Kept'' marks the checkpoint I submitted.}
+\label{tab:config}
+\input{assets/table_config}
+\end{table}
+
+SFT and both DPO runs share the same optimizer, gradient clipping, maximum length, and seed. The two DPO runs differ only in their data: they start from the same SFT checkpoint, which also serves as their frozen reference. I kept the checkpoint with the best validation reward accuracy, which was step 400 of 468 for HH-RLHF and the final step for UltraFeedback. The best SFT checkpoint is also the final one (step 937).
+
+The LoRA run differs in more than the data. It trains a LoRA adapter on SmolLM2 with TRL's \texttt{DPOTrainer}, using a larger learning rate, a smaller batch, and an extra negative log-likelihood (NLL) term on the chosen answer. The next section explains why I added that term.
+
+\paragraph{Generation.} Every evaluation used greedy decoding (\texttt{do\_sample=False}), so temperature and top-p do not apply. I generated up to 512 new tokens with repetition penalty 1.0, length penalty 1.0, and no n-gram blocking, and I used identical settings for SFT and DPO within each comparison so that the judge compares models, not decoding policies. The Qwen runs use the plain prompt template from Section~\ref{sec:data}, and the SmolLM2 runs use the model's chat template.
