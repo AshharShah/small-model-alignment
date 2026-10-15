@@ -110,3 +110,27 @@ def test_decoding_table_is_skipped_when_the_penalty_runs_are_missing(tmp_path):
     _write_judged(tmp_path / "results/judgments/dpo_uf_vs_sft_alpaca300_judged.jsonl", ["test_win"])
     rx.table_decoding_sensitivity(tmp_path, tmp_path)
     assert not (tmp_path / "table_decoding_sensitivity.md").exists()
+
+
+def test_reliability_table_marks_retried_rows_and_reports_how_many_unknowns_were_resolved(tmp_path):
+    import json
+    d = tmp_path / "results/judgments"
+    d.mkdir(parents=True)
+    base = {"n_pairs": 300, "rubric": "safety", "judge_calls": 72, "batches_run": 60, "batches_split_after_failure": 1, "failed_batches": 2,
+            "unknown": 2, "auto_ties_identical": 0}
+    (d / "a_judged.jsonl.summary.json").write_text(json.dumps({**base, "retry_runs": [{"unknown_before": 2, "unknown_after": 1}]}))
+    (d / "b_judged.jsonl.summary.json").write_text(json.dumps(base))
+    rx.table_judge_reliability(tmp_path, tmp_path, [("a", "A"), ("b", "B")])
+    text = (tmp_path / "table_judge_reliability.md").read_text()
+    assert "| A (+ retry) |" in text and "| B |" in text
+    assert "the retry resolved 1 of 2 unknown verdicts" in text
+
+
+def test_reliability_table_has_no_footnote_without_retries(tmp_path):
+    import json
+    d = tmp_path / "results/judgments"
+    d.mkdir(parents=True)
+    (d / "a_judged.jsonl.summary.json").write_text(json.dumps({"n_pairs": 5, "rubric": "general", "judge_calls": 1, "batches_run": 1,
+                                                                "failed_batches": 0, "unknown": 0, "auto_ties_identical": 0}))
+    rx.table_judge_reliability(tmp_path, tmp_path, [("a", "A")])
+    assert "retry" not in (tmp_path / "table_judge_reliability.md").read_text()

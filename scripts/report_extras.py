@@ -237,18 +237,27 @@ def fig_lora_training(root, out, ctx):
 
 
 def table_judge_reliability(root, out, labelled):
-    rows = []
+    rows, retried = [], []
     for fn, label in labelled:
         p = root / f"results/judgments/{fn}_judged.jsonl.summary.json"
         if not p.exists():
             continue
         s = js(p)
-        rows.append([label, s["n_pairs"], s["rubric"], s["judge_calls"], s["batches_run"], s["judge_calls"] - s["batches_run"],
-                     s.get("batches_split_after_failure", 0), s["failed_batches"], s["unknown"], s["auto_ties_identical"]])
+        last = s["retry_runs"][-1] if s.get("retry_runs") else None
+        if last:
+            retried.append(last)
+        rows.append([label + (" (+ retry)" if last else ""), s["n_pairs"], s["rubric"], s["judge_calls"], s["batches_run"],
+                     s["judge_calls"] - s["batches_run"], s.get("batches_split_after_failure", 0), s["failed_batches"], s["unknown"],
+                     s["auto_ties_identical"]])
     if rows:
         header = ["comparison", "pairs", "rubric", "judge calls", "batches of 5", "extra calls (retries, splits)", "batches split after failure",
                   "failed batches", "unknown verdicts", "identical outputs (auto-tie)"]
-        (out / "table_judge_reliability.md").write_text(md_table(header, rows))
+        text = md_table(header, rows)
+        if retried:
+            before, after = sum(r["unknown_before"] for r in retried), sum(r["unknown_after"] for r in retried)
+            text += (f"\nRows marked (+ retry) include one retry run of their unknown verdicts, so call and batch counts are cumulative; "
+                     f"the retry resolved {before - after} of {before} unknown verdicts.\n")
+        (out / "table_judge_reliability.md").write_text(text)
 
 
 def agreement(recs_a, recs_b):

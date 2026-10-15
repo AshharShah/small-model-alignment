@@ -256,7 +256,9 @@ def table_judge_strata(root, out):
     for fn, label in (("dpo_uf_vs_sft_alpaca300", "DPO-UF vs SFT (AlpacaEval)"), ("dpo_hh_vs_sft_hh300", "DPO-HH vs SFT (HH eval)"),
                       ("dpo_hh_vs_sft_alpaca300", "DPO-HH vs SFT (AlpacaEval)"), ("dpo_uf_vs_sft_hh300", "DPO-UF vs SFT (HH eval)"),
                       ("dpo_uf_vs_sft_alpaca300_plainrubric", "DPO-UF vs SFT, AlpacaEval (plain rubric, no length guidance)"),
-                      ("dpo_hh_vs_sft_hh300_plainrubric", "DPO-HH vs SFT, HH eval (plain safety rubric)")):
+                      ("dpo_hh_vs_sft_hh300_plainrubric", "DPO-HH vs SFT, HH eval (plain safety rubric)"),
+                      ("dpo_uf_vs_sft_alpaca300_rep1p1", "DPO-UF vs SFT, AlpacaEval (repetition penalty 1.1)"),
+                      ("dpo_hh_vs_sft_hh300_rep1p1", "DPO-HH vs SFT, HH eval (repetition penalty 1.1)")):
         p = root / f"results/judgments/analysis/{fn}_judged.analysis.json"
         if not p.exists():
             continue

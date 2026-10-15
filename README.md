@@ -36,7 +36,7 @@ The reported runs used torch 2.11.0, transformers 4.57.6, datasets 4.8.5, trl 0.
 
 ## Running the pipeline
 
-The notebooks are the easiest way to follow what I did. 01 is the setup check, 02 the baseline generations, 03 SFT, 04 a behaviour check of the SFT model, 05 and 06 the two DPO runs, 07 the first LoRA sweep, 08 generation and pair building, 09 the judging, 10 to 12 the second LoRA sweep and its judging. The judge notebooks need Kaggle's model proxy.
+The notebooks are the easiest way to follow what I did. 01 is the setup check, 02 the baseline generations, 03 SFT, 04 a behaviour check of the SFT model, 05 and 06 the two DPO runs, 07 the first LoRA sweep, 08 generation and pair building, 09 the judging, 10 to 12 the second LoRA sweep and its judging, and 13 and 14 repeat the two main comparisons with a repetition penalty and retry the few verdicts the judge failed to return. The judge notebooks need Kaggle's model proxy.
 
 The same steps as plain commands (defaults match the guide configuration, so most flags can be left out):
 
@@ -62,7 +62,7 @@ python scripts/judge_pairwise_kaggle.py --pairs_path <pairs file> --output_path 
     --judge_model google/gemini-3.6-flash --batch_size 5 --sleep_seconds 5 --max_retries 3 --reuse_judgments
 ```
 
-DPO expects the policy on `cuda:0` and the frozen reference on `cuda:1`. The judge script can be tried without any network using `--judge_model mock`.
+DPO expects the policy on `cuda:0` and the frozen reference on `cuda:1`. The judge script can be tried without any network using `--judge_model mock`. `scripts/retry_unknown_judgments.py` re-judges only the pairs that came back unknown and keeps the original call counts.
 
 For the LoRA task, `scripts/train_lora_dpo.py` trains one adapter (`--rpo_alpha 1.0` adds the NLL term on the chosen answer), `scripts/generate_chat.py` generates with it, and `scripts/persona_sweep_tools.py` builds the sweep tables, style statistics and the adapter selection.
 
@@ -90,7 +90,7 @@ SFT validation loss went from 1.350 to 1.323 in one epoch. Against the SFT model
 | DPO-HH on the HH eval | 137 / 70 / 93 | 0.596 |
 | DPO-UF on AlpacaEval | 94 / 60 / 146 | 0.392 |
 
-So the HH model looks better on the safety prompts, while the UltraFeedback model came out worse than its own SFT starting point on AlpacaEval. Both results are tangled up with answer length. When the two answers differ a lot in length, the judge tends to side with the shorter one, DPO-HH writes shorter answers than SFT and DPO-UF longer ones, and the UF model also falls into repeated phrases more often. The report goes through this in detail.
+So the HH model looks better on the safety prompts, while the UltraFeedback model came out worse than its own SFT starting point on AlpacaEval. A large part of that second result turned out to be repetition. With greedy decoding about 40% of SFT outputs and 60% of DPO-UF outputs on AlpacaEval contain a repeated phrase, and the judge penalises those. Repeating both comparisons with a repetition penalty of 1.1 (same models, prompts and judge) cut the repeated-phrase outputs to 33 and 63 of 300, and the UltraFeedback result moved from 94 / 60 / 146 to 121 / 57 / 122, a tie. The HH advantage stayed (133 / 71 / 96, 0.581) and the win rate is similar whether the HH model's answer is shorter, longer or about the same length as SFT's (0.60, 0.59 and 0.55 without ties, each on fewer pairs). In the main greedy numbers the HH win came almost entirely from pairs where its answer was shorter, so the report goes through both settings.
 
 The persona experiment was mostly a negative result. An adapter that stays coherent shows no persona, and the adapter with a clear persona is significantly worse on usefulness and safety. The sweep tables are in `results/lora/` and `report/assets/`.
 
@@ -98,4 +98,6 @@ The persona experiment was mostly a negative result. An adapter that stays coher
 
 The SFT and DPO checkpoints are about 1 GB each and are not in git. They live in the output of Kaggle notebooks 03, 05 and 06 (`outputs/sft/best`, `outputs/dpo_hh/best`, `outputs/dpo_uf/best`). The generations, pair files and judgments that every table is built from are all committed, so the reported numbers can be reproduced without retraining. The two LoRA adapters that are committed under `results/lora/final_adapter/` are small enough to keep in git, but `*.safetensors` is ignored by default, so they were added with `git add -f`.
 
-Generation is greedy with 512 new tokens and no repetition penalty, for every model. A lot of outputs, mostly from the small models, still end in repeated phrases. I kept the settings identical across models so the comparison stays fair rather than tuning them.
+The main results use greedy decoding with 512 new tokens and no repetition penalty, identical for every model, so that no model gets a decoding advantage. Many outputs end in repeated phrases under those settings, which is why the penalty rerun above exists; it is a sensitivity check, not a replacement for the main numbers.
+
+Three judge verdicts never came back (the proxy returned empty replies for a threat-rewrite prompt and a hateful-insult request, even after retries). They are excluded from win rates, logged in the `.failures.jsonl` files, and none are in the two headline comparisons.
