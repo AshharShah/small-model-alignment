@@ -1,0 +1,38 @@
+\ifcoverpage
+\begin{titlepage}
+\thispagestyle{empty}
+\centering
+\vspace*{0.14\textheight}
+{\color{accent}\rule{\textwidth}{1.4pt}}\par
+\vspace{1.4em}
+{\sffamily\large\color{muted}\reportcourse}\par
+\vspace{2.6em}
+{\sffamily\bfseries\fontsize{30}{34}\selectfont\color{accent}\reportassignment}\par
+\vspace{1.4em}
+{\itshape\Large\reporttitle}\par
+\vspace{1.4em}
+{\color{accent}\rule{0.35\textwidth}{0.6pt}}\par
+\vspace{0.9em}
+{\sffamily\small\color{muted}Final Report}\par
+\vfill
+{\renewcommand{\arraystretch}{1.55}
+\begin{tabular}{@{}r@{\hspace{1.4em}}l@{}}
+{\sffamily\small\color{muted}Instructor} & \large\reportinstructor\\
+{\sffamily\small\color{muted}Student} & \large\reportauthor\\
+{\sffamily\small\color{muted}Roll number} & \large\reportroll\\
+{\sffamily\small\color{muted}Program} & \large\reportprogram
+\end{tabular}}\par
+\vspace*{0.08\textheight}
+{\color{accent}\rule{\textwidth}{0.6pt}}\par
+\end{titlepage}
+\else
+\thispagestyle{firstpage}
+\begin{center}
+{\color{accent}\rule{\textwidth}{1.2pt}}\\[0.9em]
+{\sffamily\small\color{muted}\reportcourse\ \textperiodcentered\ \reportassignment}\\[0.5em]
+{\sffamily\bfseries\LARGE\color{accent}\reporttitle}\\[0.7em]
+{\large\reportauthor\ \textperiodcentered\ Roll no.\ \reportroll\ \textperiodcentered\ \reportprogram}\\[0.2em]
+{\small Instructor: \reportinstructor}\\[0.6em]
+{\color{accent}\rule{\textwidth}{0.5pt}}
+\end{center}
+\fi

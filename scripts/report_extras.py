@@ -24,6 +24,13 @@ def md_table(header, rows):
     return "\n".join(lines) + "\n"
 
 
+RAGGED = r">{\raggedright\arraybackslash}"
+
+TEX_ESCAPES = {"\\": r"\textbackslash{}", "&": r"\&", "%": r"\%", "$": r"\$", "#": r"\#", "_": r"\_", "{": r"\{", "}": r"\}",
+               "~": r"\textasciitilde{}", "^": r"\textasciicircum{}"}
+
+SOURCE_NAMES = {"selfinstruct": "self-instruct", "koala": "Koala", "oasst": "OASST", "helpful_base": r"helpful\_base", "vicuna": "Vicuna"}
+
 REFUSAL = re.compile(r"\b(i'?m sorry|i am sorry|i cannot|i can'?t|i won'?t|i'?m not able|i am not able|unable to|i'?m unable)\b", re.I)
 
 MAIN = [("dpo_uf_vs_sft_alpaca300", "DPO-UF vs SFT, AlpacaEval"),
@@ -46,6 +53,22 @@ DECODING_PAIRS = [("dpo_uf_vs_sft_alpaca300", "DPO-UF vs SFT, AlpacaEval", "Alpa
                    [("SFT", "sft_qwen2.5-0.5b_hh300"), ("DPO-HH", "dpo_hh_qwen2.5-0.5b_hh300")])]
 
 BIAS_RUNS = [("dpo_uf_vs_sft_alpaca300", "DPO-UF vs SFT, AlpacaEval"), ("dpo_hh_vs_sft_hh300", "DPO-HH vs SFT, HH eval")]
+
+
+def tex_escape(text):
+    return "".join(TEX_ESCAPES.get(c, c) for c in str(text))
+
+
+def tt(text):
+    return r"\texttt{" + tex_escape(text).replace(r"\_", r"\_\allowbreak{}") + "}"
+
+
+def latex_tabular(header, rows, spec):
+    lines = [r"\begingroup\small\renewcommand{\arraystretch}{1.12}", rf"\begin{{tabularx}}{{\textwidth}}{{{spec}}}", r"\toprule",
+             " & ".join(header) + r" \\", r"\midrule"]
+    lines += [" & ".join(r) + r" \\" for r in rows]
+    lines += [r"\bottomrule", r"\end{tabularx}", r"\endgroup"]
+    return "\n".join(lines) + "\n"
 
 
 def load_judged(root, fn):
@@ -100,6 +123,62 @@ def table_data(root, out):
          f"none; seeded shuffle (seed {lo['seed']}), first {lo['n_val']} rows held out", "-"],
     ]
     (out / "table_data.md").write_text(md_table(["track", "source (train split / validation split)", "train / validation", "filtering", "mean tokens"], rows))
+
+
+def tex_data(root, out):
+    try:
+        sft = js(root / "results/sft/sft_data_manifest.json")
+        hh = js(root / "results/dpo_hh/dpo_hh_manifest.json")
+        uf = js(root / "results/dpo_uf/dpo_uf_manifest.json")
+        lo = js(root / "results/lora/final_config.json")
+    except FileNotFoundError as e:
+        print("skip tex_data:", e)
+        return
+    n = lambda x: f"{x:,}"
+    split = lambda m: f"({tt(m['train']['source_split'])} / {tt(m['val']['source_split'])})"
+    limits = lambda m: rf"prompt $\le$ {m['max_prompt_length']} and prompt + response + EOS $\le$ {m['max_length']} tokens"
+    rows = [
+        ["SFT", rf"UltraChat-200k~\citep{{ding2023ultrachat}} {split(sft)}", f"{n(sft['train']['n'])} / {n(sft['val']['n'])}",
+         rf"first user--assistant turn only; prompt + response + EOS $\le$ {sft['max_length']} tokens "
+         f"({n(sft['train']['skipped_too_long'])} of {n(sft['train']['seen'])} train rows dropped)"],
+        ["HH-RLHF DPO", rf"HH-RLHF~\citep{{bai2022hh}} {split(hh)}", f"{n(hh['train']['n'])} / {n(hh['val']['n'])}",
+         f"single-turn only ({n(hh['train']['skipped_not_single_turn'])} multi-turn rows dropped); {limits(hh)} "
+         f"({n(hh['train']['skipped_too_long'])} dropped)"],
+        ["UltraFeedback DPO", rf"UltraFeedback, binarized~\citep{{cui2023ultrafeedback,tunstall2023zephyr}} {split(uf)}",
+         rf"{n(uf['train']['n'])} / {n(uf['val']['n'])}$^\dagger$",
+         rf"single-turn only; chosen score $>$ rejected ({n(uf['train']['skipped_tie_or_reversed_score'])} ties dropped); same length limits "
+         rf"({n(uf['train']['skipped_too_long'])} dropped)"],
+        ["LoRA persona DPO", rf"provided {tt('ramsay_style_preferences.json')}", f"{lo['n_train']} / {lo['n_val']}",
+         f"none; seeded shuffle (seed {lo['seed']}), {lo['n_val']} rows held out"],
+    ]
+    spec = f"{RAGGED}p{{2.15cm}}{RAGGED}p{{4.3cm}}p{{2.2cm}}{RAGGED}X"
+    (out / "table_data.tex").write_text(latex_tabular(["Track", "Source (train / validation split)", "Train / val", "Filtering"], rows, spec))
+    (out / "table_data_footnote.tex").write_text(f"{uf['val']['from_train_holdout']}")
+
+
+def tex_eval_sets(root, out):
+    es = root / "eval_sets"
+    try:
+        alp, hh = js(es / "alpaca_eval_300_seed42.json"), js(es / "hh_rlhf_eval_300_seed42.json")
+        per, held = js(es / "persona_eval_prompts.json"), js(es / "persona_heldout_prompts.json")
+    except FileNotFoundError as e:
+        print("skip tex_eval_sets:", e)
+        return
+    src = Counter(r["source_dataset"] for r in alp)
+    sources = ", ".join(f"{SOURCE_NAMES.get(k, tex_escape(k))} {v}" for k, v in src.most_common())
+    hh_c, per_c = Counter(r["category"] for r in hh), Counter(r["category"] for r in per)
+    even = lambda c: f"{len(c)} categories $\\times$ {next(iter(c.values()))} prompts" if len(set(c.values())) == 1 else ", ".join(f"{k} {v}" for k, v in c.items())
+    rows = [
+        ["AlpacaEval-300", str(len(alp)), rf"random subset (seed 42) of the 805 AlpacaEval prompts~\citep{{dubois2024lc}}: {sources}",
+         r"SFT vs.\ DPO-UF (main), DPO-HH (alignment tax)"],
+        ["HH-eval-300", str(len(hh)), f"synthetic helpful/harmless set provided with the assignment; {even(hh_c)}",
+         r"SFT vs.\ DPO-HH (main), DPO-UF (alignment tax)"],
+        ["Persona-40", str(len(per)), f"hand-written, {even(per_c)} (cooking, coding, general help, safety-sensitive); disjoint from the training prompts",
+         r"LoRA adapters vs.\ base model (test)"],
+        ["Held-out-22", str(len(held)), "validation rows of the persona data, never trained on", "LoRA adapter selection (dev)"],
+    ]
+    spec = f"{RAGGED}p{{2.3cm}}r{RAGGED}X{RAGGED}p{{4.1cm}}"
+    (out / "table_eval_sets.tex").write_text(latex_tabular(["Evaluation set", "Prompts", "Composition", "Used for"], rows, spec))
 
 
 def table_eval_sets(root, out):
@@ -568,6 +647,8 @@ def write_index(out):
 def build_all(root, out, ctx, labelled):
     table_data(root, out)
     table_eval_sets(root, out)
+    tex_data(root, out)
+    tex_eval_sets(root, out)
     table_deviations(root, out)
     fig_dpo_rewards(root, out)
     fig_lora_training(root, out, ctx)

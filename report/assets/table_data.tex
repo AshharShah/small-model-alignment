@@ -1,0 +1,12 @@
+\begingroup\small\renewcommand{\arraystretch}{1.12}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{2.15cm}>{\raggedright\arraybackslash}p{4.3cm}p{2.2cm}>{\raggedright\arraybackslash}X}
+\toprule
+Track & Source (train / validation split) & Train / val & Filtering \\
+\midrule
+SFT & UltraChat-200k~\citep{ding2023ultrachat} (\texttt{train\_\allowbreak{}sft} / \texttt{test\_\allowbreak{}sft}) & 30,000 / 1,000 & first user--assistant turn only; prompt + response + EOS $\le$ 512 tokens (21,560 of 51,565 train rows dropped) \\
+HH-RLHF DPO & HH-RLHF~\citep{bai2022hh} (\texttt{train} / \texttt{test}) & 15,000 / 1,000 & single-turn only (34,382 multi-turn rows dropped); prompt $\le$ 256 and prompt + response + EOS $\le$ 512 tokens (127 dropped) \\
+UltraFeedback DPO & UltraFeedback, binarized~\citep{cui2023ultrafeedback,tunstall2023zephyr} (\texttt{train\_\allowbreak{}prefs} / \texttt{test\_\allowbreak{}prefs}) & 15,000 / 1,000$^\dagger$ & single-turn only; chosen score $>$ rejected (3,687 ties dropped); same length limits (12,124 dropped) \\
+LoRA persona DPO & provided \texttt{ramsay\_\allowbreak{}style\_\allowbreak{}preferences.json} & 198 / 22 & none; seeded shuffle (seed 42), 22 rows held out \\
+\bottomrule
+\end{tabularx}
+\endgroup

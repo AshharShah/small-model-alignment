@@ -134,3 +134,26 @@ def test_reliability_table_has_no_footnote_without_retries(tmp_path):
                                                                 "failed_batches": 0, "unknown": 0, "auto_ties_identical": 0}))
     rx.table_judge_reliability(tmp_path, tmp_path, [("a", "A")])
     assert "retry" not in (tmp_path / "table_judge_reliability.md").read_text()
+
+
+def test_tex_escape_handles_every_special_character():
+    assert rx.tex_escape("a_b & 50% #1 {x} $y$ ~ ^") == r"a\_b \& 50\% \#1 \{x\} \$y\$ \textasciitilde{} \textasciicircum{}"
+    assert rx.tt("ramsay_style.json") == r"\texttt{ramsay\_\allowbreak{}style.json}"
+
+
+def test_latex_tabular_is_a_booktabs_tabularx_block():
+    text = rx.latex_tabular(["A", "B"], [["1", "2"], ["3", "4"]], "lX")
+    assert text.count(r"\\") == 3 and r"\toprule" in text and r"\midrule" in text and r"\bottomrule" in text
+    assert r"\begin{tabularx}{\textwidth}{lX}" in text and "1 & 2" in text
+
+
+def test_generated_tex_tables_carry_the_manifest_numbers(tmp_path):
+    rx.tex_data(ROOT, tmp_path)
+    rx.tex_eval_sets(ROOT, tmp_path)
+    data = (tmp_path / "table_data.tex").read_text()
+    for needle in ("30,000 / 1,000", "21,560", "34,382", "3,687", "198 / 22", r"\citep{ding2023ultrachat}", r"$\le$ 512"):
+        assert needle in data, needle
+    assert (tmp_path / "table_data_footnote.tex").read_text() == "27"
+    evals = (tmp_path / "table_eval_sets.tex").read_text()
+    for needle in ("AlpacaEval-300", "self-instruct 95", "10 categories", "Held-out-22"):
+        assert needle in evals, needle
