@@ -212,3 +212,31 @@ def test_deviation_table_separates_resource_data_and_performance_changes(tmp_pat
                    "31/40 at", "2/40 at", "0.52 against 1.02", r"Table~\ref{tab:lorasweep}"):
         assert needle in text, needle
     assert text.count(r"\rowcolor") == 3 and text.count(r"\\") == 12
+
+
+def test_dpo_results_table_has_the_three_groups_and_the_judged_numbers(tmp_path):
+    rx.tex_dpo_results(ROOT, tmp_path)
+    text = (tmp_path / "table_dpo_results.tex").read_text()
+    for needle in ("HH-RLHF DPO vs SFT, HH-eval & 300 & 137 & 70 & 93 & 0", "0.596 [0.531, 0.657]", "0.392 [0.332, 0.455]",
+                   "UltraFeedback DPO vs SFT, HH-eval & 300 & 96 & 68 & 134 & 2", "UltraFeedback, AlpacaEval: repetition penalty 1.1 & 300 & 121 & 57 & 122",
+                   "0.498 [0.436, 0.560] & 0.498 & 1.000", "<0.001", "Sensitivity of the own-track comparisons"):
+        assert needle in text, needle
+    assert text.count(r"\rowcolor") == 3 and text.count(r"\\") == 1 + 3 + 10
+
+
+def test_lora_results_table_keeps_the_persona_task_separate_with_a_control(tmp_path):
+    ctx = {"selected": "r16_lr5e-5_rpo1", "strongest": "r16_lr1e-4_rpo1_e6"}
+    rx.tex_lora_results(ROOT, tmp_path, ctx)
+    text = (tmp_path / "table_lora_results.tex").read_text()
+    for needle in ("Positive control", "& 22 & 22 & 0 & 0 &", "Selected adapter: rank 16", "Strongest persona adapter: rank 16",
+                   "& 40 & 0 & 40 & 0 &", "& 40 & 24 & 16 & 0 &", "& 40 & 11 & 2 & 27 &", "& 40 & 4 & 18 & 18 &", "NLL term"):
+        assert needle in text, needle
+    assert text.count(r"\rowcolor") == 3 and text.count(r"\\") == 1 + 3 + 9
+
+
+def test_result_tables_are_skipped_when_judged_files_are_missing(tmp_path):
+    out = tmp_path / "out"
+    out.mkdir()
+    rx.tex_dpo_results(tmp_path, out)
+    rx.tex_lora_results(tmp_path, out, None)
+    assert list(out.iterdir()) == []

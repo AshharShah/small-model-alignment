@@ -1,0 +1,28 @@
+\section{DPO-versus-SFT Results}
+\label{sec:results}
+
+For each DPO track, I compared the submitted checkpoint with the SFT checkpoint it started from, on the same 300 prompts, with the same generation settings and the same judge (Table~\ref{tab:dpo}). I report each comparison separately and never average across them: the two tracks use different prompts, rubrics, and preference data, so a single headline score would mix unlike targets.
+
+\begin{table}[H]
+\centering
+\caption{Pairwise judge results for the model named first against SFT on identical prompts: wins (W), ties (T), and losses (L), unknown verdicts (Unk.), and judge calls beyond one per batch of five (extra calls). Win rate excluding ties is W/(W+L) with a 95\% Wilson interval, win rate with ties counts each tie as half a win, and the sign test is exact and two-sided on W against L. Pairs with identical outputs count as ties. In the sensitivity rows, the plain rubric drops the length guidance, and the repetition penalty applies to both models.}
+\label{tab:dpo}
+\input{assets/table_dpo_results}
+\end{table}
+
+\paragraph{Judging procedure.} The judge is google/gemini-3.6-flash, which I called through the Kaggle model proxy. It saw five prompts per request, with the two responses to each prompt in a seeded random A/B order (each model came first in exactly 150 of the 300 pairs) and no model names, and it chose A, B, or tie under a rubric that matches the track: helpfulness and correctness for AlpacaEval, with a safety addendum for HH-eval. Both rubrics tell the judge not to prefer an answer for its length alone. I kept the prompt order and the generation settings identical for the two models in every comparison.
+
+\paragraph{Failures and invalid verdicts.} I retried a failed request up to three times with a 5\,s pause, and then re-asked the pairs of a failed batch one at a time. A verdict that stayed invalid after that counts as unknown, and I excluded it from both win rates and logged it in a failure file. Only the UltraFeedback model on the HH-eval prompts ended with unknown verdicts (2 of 300), and a separate retry run did not resolve them. The plain-rubric check on HH-eval has one more. Pairs with identical outputs count as ties without a judge call, which covered 5 of the 300 UltraFeedback pairs and 2 of the 300 HH-RLHF pairs.
+
+\paragraph{Results.} On its own track, HH-RLHF DPO beat SFT on the HH-eval prompts (win rate 0.596 excluding ties and 0.573 counting ties as half), while UltraFeedback DPO lost to SFT on AlpacaEval (0.392 and 0.413). Both gaps pass the sign test at the 0.01 level ($p=0.004$ and $0.001$). On the other track's prompts, HH-RLHF DPO matched SFT on AlpacaEval (0.493, $p=0.889$), and UltraFeedback DPO lost on HH-eval (0.417, $p=0.015$).
+
+\paragraph{Sensitivity.} Swapping the A/B positions and removing the rubric's length guidance leave both conclusions in place (HH-RLHF 0.613 and 0.580; UltraFeedback 0.418 and 0.413). In both orders and for both comparisons, the judge picked the response shown first more often than the one shown second (144 picks against 96 for UltraFeedback before the swap), which is why I ran the swap. A repetition penalty of 1.1, applied to both models, leaves HH-RLHF almost unchanged (0.581) but lifts UltraFeedback from 0.392 to 0.498, a tie ($p=1.0$). The UltraFeedback deficit therefore depends on the decoding setting, and the next section returns to why.
+
+\paragraph{LoRA persona result.} The persona task has a different target, so I report it on its own (Table~\ref{tab:lorares}) and do not combine it with the DPO numbers. I judged each adapter against the base SmolLM2 model on persona style, usefulness, and safety, each with its own rubric. As a positive control, the judge compared the dataset's persona answers with its neutral answers on the 22 held-out prompts and picked the persona answer all 22 times, so the style rubric can see the persona. The selected adapter does not change the style the judge sees (0 wins, 40 ties, and 0 losses on the required prompts; 2 wins and 20 ties on the held-out prompts), and its usefulness and safety differences from the base model are not significant. The strongest persona adapter, which used twice the learning rate and twice the epochs, wins on style (24 wins, 16 ties, 0 losses on the required prompts; 19, 3, 0 on the held-out prompts) but loses on usefulness (11 wins, 27 losses; $p=0.014$) and safety (4 wins, 18 losses; $p=0.004$). No LoRA verdict was unknown.
+
+\begin{table}[H]
+\centering
+\caption{LoRA persona results, each adapter against the base SmolLM2 model, one rubric per judged target. The positive control compares the dataset's own persona and neutral answers, so it shows whether the style rubric can detect the persona at all. Table~\ref{tab:dpo} defines the columns.}
+\label{tab:lorares}
+\input{assets/table_lora_results}
+\end{table}

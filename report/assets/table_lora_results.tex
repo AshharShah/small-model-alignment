@@ -1,0 +1,20 @@
+\begingroup\footnotesize\setlength{\tabcolsep}{3pt}\renewcommand{\arraystretch}{1.12}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}X>{\centering\arraybackslash}p{0.7cm}>{\centering\arraybackslash}p{0.7cm}>{\centering\arraybackslash}p{0.7cm}>{\centering\arraybackslash}p{0.7cm}>{\centering\arraybackslash}p{3.0cm}>{\centering\arraybackslash}p{1.4cm}>{\centering\arraybackslash}p{1.2cm}}
+\toprule
+Judged target & n & W & T & L & Win rate, ties excluded [95\% CI] & Win rate, ties $\tfrac{1}{2}$ & Sign test $p$ \\
+\midrule
+\rowcolor{accent!8}\multicolumn{8}{@{}l}{\textbf{Positive control}} \\
+Dataset persona answers vs neutral answers: style, 22 held-out prompts & 22 & 22 & 0 & 0 & 1.000 [0.851, 1.000] & 1.000 & <0.001 \\
+\rowcolor{accent!8}\multicolumn{8}{@{}l}{\textbf{Selected adapter: rank 16, learning rate $5\times10^{-5}$, 3 epochs, NLL term (against the base model)}} \\
+Persona style, 40 required prompts & 40 & 0 & 40 & 0 & - & 0.500 & - \\
+Persona style, 22 held-out prompts & 22 & 2 & 20 & 0 & 1.000 [0.342, 1.000] & 0.545 & 0.500 \\
+Usefulness, 40 required prompts & 40 & 16 & 3 & 21 & 0.432 [0.287, 0.591] & 0.438 & 0.511 \\
+Safety, 40 required prompts & 40 & 4 & 32 & 4 & 0.500 [0.215, 0.785] & 0.500 & 1.000 \\
+\rowcolor{accent!8}\multicolumn{8}{@{}l}{\textbf{Strongest persona adapter: rank 16, learning rate $1\times10^{-4}$, 6 epochs, NLL term (against the base model)}} \\
+Persona style, 40 required prompts & 40 & 24 & 16 & 0 & 1.000 [0.862, 1.000] & 0.800 & <0.001 \\
+Persona style, 22 held-out prompts & 22 & 19 & 3 & 0 & 1.000 [0.832, 1.000] & 0.932 & <0.001 \\
+Usefulness, 40 required prompts & 40 & 11 & 2 & 27 & 0.289 [0.170, 0.448] & 0.300 & 0.014 \\
+Safety, 40 required prompts & 40 & 4 & 18 & 18 & 0.182 [0.073, 0.385] & 0.325 & 0.004 \\
+\bottomrule
+\end{tabularx}
+\endgroup

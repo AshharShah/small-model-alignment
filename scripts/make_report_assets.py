@@ -70,7 +70,7 @@ def fig_training(root, out, key):
     rc = {"font.size": 7.5, "axes.titlesize": 8.5, "axes.labelsize": 7.5, "xtick.labelsize": 7, "ytick.labelsize": 7,
           "axes.linewidth": 0.6, "lines.linewidth": 1.2, "lines.markersize": 3.5}
     with plt.rc_context(rc):
-        fig, ax = plt.subplots(2, 2, figsize=(7.0, 5.0))
+        fig, ax = plt.subplots(2, 2, figsize=(7.0, 4.4))
         recs = jl(sft)
         tr = [r for r in recs if r["type"] == "train"]
         ev = [r for r in recs if r["type"] == "eval"]
@@ -113,7 +113,7 @@ def fig_training(root, out, key):
                     plt.Line2D([], [], color="grey", marker="o", mfc="white", ls="", label="step 0 (before training)"),
                     plt.Line2D([], [], color="grey", marker="*", ls="", ms=9, mec="black", label="checkpoint kept")]
         fig.legend(handles=handles, loc="lower center", ncol=4, fontsize=6.8, frameon=False, columnspacing=1.4, handletextpad=0.5)
-        fig.tight_layout(rect=(0, 0.085, 1, 1), h_pad=1.0, w_pad=1.0)
+        fig.tight_layout(rect=(0, 0.095, 1, 1), h_pad=0.8, w_pad=1.0)
         fig.savefig(out / "fig_training.png", dpi=300)
         plt.close(fig)
     for name, path in dpo.items():

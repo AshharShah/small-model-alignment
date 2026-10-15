@@ -333,6 +333,93 @@ def table_deviations(root, out):
     (out / "table_deviations.md").write_text(text)
 
 
+def band_row(text, columns):
+    return rf"\rowcolor{{accent!8}}\multicolumn{{{columns}}}{{@{{}}l}}{{\textbf{{{text}}}}}"
+
+
+def p_text(p):
+    return "-" if p is None else ("<0.001" if p < 0.001 else f"{p:.3f}")
+
+
+def outcome_cells(s):
+    return [str(s["n"]), str(s["wins"]), str(s["ties"]), str(s["losses"])], [rate_ci(s), f"{s['win_rate_ties_half']:.3f}", p_text(s["sign_test_p"])]
+
+
+def extra_calls(root, fn):
+    m = js(root / f"results/judgments/{fn}_judged.jsonl.summary.json")
+    return m["judge_calls"] - m["batches_run"]
+
+
+DPO_RESULT_BANDS = [
+    ("Own-track comparison: submitted DPO checkpoint against its SFT baseline",
+     [("HH-RLHF DPO vs SFT, HH-eval", "dpo_hh_vs_sft_hh300"), ("UltraFeedback DPO vs SFT, AlpacaEval", "dpo_uf_vs_sft_alpaca300")]),
+    ("Alignment tax: the other track's prompts",
+     [("HH-RLHF DPO vs SFT, AlpacaEval", "dpo_hh_vs_sft_alpaca300"), ("UltraFeedback DPO vs SFT, HH-eval", "dpo_uf_vs_sft_hh300")]),
+    ("Sensitivity of the own-track comparisons: one setting changed",
+     [("HH-RLHF, HH-eval: positions swapped", "dpo_hh_vs_sft_hh300_swapped"), ("HH-RLHF, HH-eval: plain rubric", "dpo_hh_vs_sft_hh300_plainrubric"),
+      ("HH-RLHF, HH-eval: repetition penalty 1.1", "dpo_hh_vs_sft_hh300_rep1p1"),
+      ("UltraFeedback, AlpacaEval: positions swapped", "dpo_uf_vs_sft_alpaca300_swapped"),
+      ("UltraFeedback, AlpacaEval: plain rubric", "dpo_uf_vs_sft_alpaca300_plainrubric"),
+      ("UltraFeedback, AlpacaEval: repetition penalty 1.1", "dpo_uf_vs_sft_alpaca300_rep1p1")]),
+]
+
+
+def tex_dpo_results(root, out):
+    rows = []
+    for band, items in DPO_RESULT_BANDS:
+        group = []
+        for label, fn in items:
+            recs = load_judged(root, fn)
+            if recs is None:
+                continue
+            s = sj.stats(recs)
+            counts, rates = outcome_cells(s)
+            group.append([label] + counts + [str(s["unknown"]), str(extra_calls(root, fn))] + rates)
+        if group:
+            rows += [[band_row(band, 10)]] + group
+    if not rows:
+        print("skip tex_dpo_results: judged files missing")
+        return
+    centered = r">{\centering\arraybackslash}"
+    spec = r">{\raggedright\arraybackslash}X" + "".join(centered + f"p{{{w}}}" for w in ("0.7cm", "0.7cm", "0.7cm", "0.7cm", "0.8cm", "1.0cm", "3.0cm", "1.4cm", "1.2cm"))
+    header = ["Comparison", "n", "W", "T", "L", "Unk.", "Extra calls", r"Win rate, ties excluded [95\% CI]", r"Win rate, ties $\tfrac{1}{2}$", r"Sign test $p$"]
+    (out / "table_dpo_results.tex").write_text(latex_tabular(header, rows, spec, size=r"\footnotesize", tabcolsep="3pt"))
+
+
+def tex_lora_results(root, out, ctx):
+    if not ctx:
+        print("skip tex_lora_results: persona selection missing")
+        return
+    rows = []
+    control = load_judged(root, "persona22_control_chosen_vs_rejected_style")
+    if control is not None:
+        counts, rates = outcome_cells(sj.stats(control))
+        rows += [[band_row("Positive control", 8)], ["Dataset persona answers vs neutral answers: style, 22 held-out prompts"] + counts + rates]
+    for tag, run in (("Selected adapter", ctx["selected"]), ("Strongest persona adapter", ctx["strongest"])):
+        if tag == "Strongest persona adapter" and run == ctx["selected"]:
+            continue
+        args = js(root / f"results/lora/runs/{run}_metrics.json")["args"]
+        title = f"{tag}: rank {args['lora_r']}, learning rate {sci(float(args['lr']))}, {float(args['epochs']):g} epochs" + (", NLL term" if float(args.get("rpo_alpha", 0)) > 0 else "")
+        group = []
+        for label, fn in ((f"Persona style, 40 required prompts", f"persona40_{run}_vs_base_style"),
+                          (f"Persona style, 22 held-out prompts", f"persona22_{run}_vs_base_style"),
+                          (f"Usefulness, 40 required prompts", f"persona40_{run}_vs_base_useful"),
+                          (f"Safety, 40 required prompts", f"persona40_{run}_vs_base_safety")):
+            recs = load_judged(root, fn)
+            if recs is not None:
+                counts, rates = outcome_cells(sj.stats(recs))
+                group.append([label] + counts + rates)
+        if group:
+            rows += [[band_row(title + " (against the base model)", 8)]] + group
+    if not rows:
+        print("skip tex_lora_results: judged files missing")
+        return
+    centered = r">{\centering\arraybackslash}"
+    spec = r">{\raggedright\arraybackslash}X" + "".join(centered + f"p{{{w}}}" for w in ("0.7cm", "0.7cm", "0.7cm", "0.7cm", "3.0cm", "1.4cm", "1.2cm"))
+    header = ["Judged target", "n", "W", "T", "L", r"Win rate, ties excluded [95\% CI]", r"Win rate, ties $\tfrac{1}{2}$", r"Sign test $p$"]
+    (out / "table_lora_results.tex").write_text(latex_tabular(header, rows, spec, size=r"\footnotesize", tabcolsep="3pt"))
+
+
 def peak_memory(root, run, key):
     return max(r[key] for r in jl(root / f"results/{run}/metrics.jsonl") if r["type"] == "train")
 
@@ -375,7 +462,7 @@ def tex_deviations(root, out, runs):
     micro = math.ceil(lo["n_train"] / lo["per_device_batch_size"])
     updates = math.ceil(micro / lo["grad_accum"])
     doubled = math.ceil(micro / (2 * lo["grad_accum"]))
-    band = lambda text: [rf"\rowcolor{{accent!8}}\multicolumn{{4}}{{@{{}}l}}{{\textbf{{{text}}}}}"]
+    band = lambda text: [band_row(text, 4)]
     rows = [
         band("Resource-driven"),
         ["SFT validation batch", "not specified", f"{sft['eval_batch_size']}, down from 8",
@@ -791,6 +878,8 @@ def build_all(root, out, ctx, labelled):
     tex_data(root, out)
     tex_eval_sets(root, out)
     tex_config(root, out)
+    tex_dpo_results(root, out)
+    tex_lora_results(root, out, ctx)
     table_deviations(root, out)
     fig_dpo_rewards(root, out)
     fig_lora_training(root, out, ctx)
