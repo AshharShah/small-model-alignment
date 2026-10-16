@@ -1,0 +1,40 @@
+\section{Limitations and Reproducibility}
+\label{sec:limits}
+
+\paragraph{One judge, no human check.} A single language model, google/gemini-3.6-flash, scored every comparison, and I never checked it against human labels. It leaned toward the answer it saw first, and its verdict changed with the A/B order for 20 to 23\% of pairs (Cohen's $\kappa$ 0.65 and 0.68), so single verdicts are noisy. The two headline conclusions held when I swapped the order and when I dropped the length guidance from the rubric (Table~\ref{tab:dpo}), but I cannot rule out a leftover preference for length.
+
+\paragraph{Small evaluation sets.} Each DPO comparison has 300 prompts, which leaves the 95\% intervals about $\pm$6 points wide. The 30 prompts per category and the 40 or 22 persona prompts give much wider ones (0.215 to 0.785 for the selected adapter's safety), so I treat the category and persona results as hints, not findings. I also used the 40 required persona prompts to screen the first LoRA sweep, so they are not a clean test set, and the 22 held-out prompts I built afterwards are a thin basis for choosing among six adapters (Section~\ref{sec:deviations}).
+
+\paragraph{One training run per model.} I trained every model once, with seed 42, so the intervals and sign tests reflect only which prompts I used, not how much another seed would change a DPO model.
+
+\paragraph{Explanations I did not test.} I chose the length, category, and repetition breakdowns in Section~\ref{sec:analysis} after seeing the overall results. They suggest why the UltraFeedback model lost, but they do not prove it, and I ran no DPO ablations (other checkpoints or other $\beta$ values) that would separate over-training from a data mismatch.
+
+\paragraph{Decoding.} I evaluated greedy decoding only, and the 512-token limit cut off 44 SFT and 71 UltraFeedback answers on AlpacaEval. A repetition penalty changed the UltraFeedback conclusion, so that result describes a decoding setting as much as a model, and I did not evaluate sampling.
+
+\paragraph{Scope and compute.} The Kaggle T4 pair limited me to 0.5B and 0.36B models, one epoch, fp16, 512-token sequences, and single-turn data, so I cannot say whether the results carry over to larger models, longer training, or multi-turn chat.
+
+\paragraph{Changed plans and exclusions.} My first LoRA sweep produced no persona, so I added the NLL term and built the held-out set and the positive control afterwards, which means those choices came after I had seen results. My first judge pass had weaker failure handling, so I added failed-batch isolation and re-ran every comparison, and this report uses only the re-run. Three verdicts stayed unknown after a retry, and I excluded them from the win rates.
+
+\paragraph{Reproducibility.} Every table in this report comes from files committed to the repository, so staff can rebuild it without retraining. No file under \path{results/} has changed since commit \texttt{1bb5a4f}. Table~\ref{tab:paths} lists the key paths.
+
+\begin{table}[H]
+\centering
+\caption{Key paths, relative to the repository root.}
+\label{tab:paths}
+\begingroup\footnotesize\setlength{\tabcolsep}{3pt}\renewcommand{\arraystretch}{1.0}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3.3cm}>{\raggedright\arraybackslash}X}
+\toprule
+What & Where \\
+\midrule
+Configurations & \path{results/{sft,dpo_hh,dpo_uf}/config.json}, \path{results/lora/final_config.json} \\
+Training metrics & \path{results/{sft,dpo_hh,dpo_uf}/metrics.jsonl}, \path{results/lora/runs/} (all 12 adapters) \\
+Data manifests, prompts & \path{results/*/*_manifest.json}, \path{eval_sets/}, \path{data/persona_lora/} \\
+Generations, pair files & \path{results/generations/} (decoding settings in the matching \path{.meta.json} files) and \path{results/eval/} (pair files) \\
+Judged outputs & \path{results/judgments/} (\path{*_judged.jsonl}, \path{*.summary.json}, \path{results_overview.csv}, \path{analysis/}) \\
+Selected LoRA adapter & \path{results/lora/final_adapter/persona_lora_r16_lr5e-5_rpo1/} \\
+SFT and DPO checkpoints & Not in git (about 1 GB each): outputs of Kaggle notebooks 03, 05, and 06 (\texttt{outputs/sft/best}, \texttt{outputs/dpo\_hh/best}, \texttt{outputs/dpo\_uf/best}) \\
+Code, notebooks, rebuild & \path{scripts/}, \path{src/alignment/}, \path{notebooks/} (01 to 14); \texttt{python scripts/make\_report\_assets.py}, \texttt{make -C report}, \texttt{pytest -q tests} \\
+\bottomrule
+\end{tabularx}
+\endgroup
+\end{table}

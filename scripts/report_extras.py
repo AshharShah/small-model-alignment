@@ -64,9 +64,9 @@ def tt(text):
     return r"\texttt{" + tex_escape(text).replace(r"\_", r"\_\allowbreak{}") + "}"
 
 
-def latex_tabular(header, rows, spec, size=r"\small", tabcolsep=None):
+def latex_tabular(header, rows, spec, size=r"\tablefont", tabcolsep=None):
     pad = rf"\setlength{{\tabcolsep}}{{{tabcolsep}}}" if tabcolsep else ""
-    lines = [rf"\begingroup{size}{pad}\renewcommand{{\arraystretch}}{{1.12}}", rf"\begin{{tabularx}}{{\textwidth}}{{{spec}}}", r"\toprule",
+    lines = [rf"\begingroup{size}{pad}\renewcommand{{\arraystretch}}{{1.0}}", rf"\begin{{tabularx}}{{\textwidth}}{{{spec}}}", r"\toprule",
              " & ".join(header) + r" \\", r"\midrule"]
     lines += [" & ".join(r) + r" \\" for r in rows]
     lines += [r"\bottomrule", r"\end{tabularx}", r"\endgroup"]
@@ -172,18 +172,17 @@ def tex_config(root, out):
         dpo_row("HH-RLHF DPO", hh, hsum, meta["hh"]),
         dpo_row("UltraFeedback DPO", uf, usum, meta["uf"]),
         ["LoRA-DPO (TRL)",
-         cell(rf"LoRA $r={lo['lora_r']}$, $\alpha={lo['lora_alpha']}$, dropout {lo['lora_dropout']:g}", f"targets: {targets}",
-              f"{lo['trainable_params']:,} of {lo['total_params']:,} trainable ({lo['trainable_params'] / lo['total_params']:.2%})".replace("%", r"\%")),
-         cell(r"AdamW, $\beta=(0.9,0.999)$ (Trainer default)", rf"peak LR {sci(lo['lr'])}", f"{lo['lr_scheduler']} to 0, warmup {lo['warmup_steps']} steps",
+         cell(rf"LoRA $r={lo['lora_r']}$, $\alpha={lo['lora_alpha']}$, dropout {lo['lora_dropout']:g}", f"targets: {targets}"),
+         cell("AdamW, default betas", rf"peak LR {sci(lo['lr'])}", f"{lo['lr_scheduler']} to 0, warmup {lo['warmup_steps']} steps",
               f"weight decay 0, clip {lo['max_grad_norm']:.1f}"),
          cell(rf"{lo['per_device_batch_size']} $\times$ {lo['grad_accum']} accum.\ $=$ {lo['effective_batch_size']}", "fp32 weights, fp16 autocast",
               f"max length {lo['max_length']}, seed {lo['seed']}", f"{lo['epochs']:g} epochs, {lo['optimizer_steps']} steps"),
-         cell(rf"$\beta={lo['beta']:g}$, plus NLL on the chosen answer ($\mathrm{{rpo}}_\alpha={lo['rpo_alpha']:g}$)", "reference: base SmolLM2, adapter disabled"),
+         cell(rf"$\beta={lo['beta']:g}$, plus NLL on the chosen answer", "reference: base SmolLM2, adapter off"),
          gen(meta["lora"], chat)],
     ]
     spec = f"{RAGGED}p{{1.8cm}}{RAGGED}p{{2.9cm}}{RAGGED}p{{2.9cm}}{RAGGED}p{{3.3cm}}{RAGGED}p{{2.4cm}}{RAGGED}X"
     header = ["Run", "Trainable parameters", "Optimizer and schedule", "Batch, precision, length, seed", r"DPO $\beta$ and reference", "Generation"]
-    (out / "table_config.tex").write_text(latex_tabular(header, rows, spec, size=r"\footnotesize", tabcolsep="3pt"))
+    (out / "table_config.tex").write_text(latex_tabular(header, rows, spec, size=r"\tablefont", tabcolsep="3pt"))
 
 
 def tex_data(root, out):
@@ -383,7 +382,7 @@ def tex_dpo_results(root, out):
     centered = r">{\centering\arraybackslash}"
     spec = r">{\raggedright\arraybackslash}X" + "".join(centered + f"p{{{w}}}" for w in ("0.7cm", "0.7cm", "0.7cm", "0.7cm", "0.8cm", "1.0cm", "3.0cm", "1.4cm", "1.2cm"))
     header = ["Comparison", "n", "W", "T", "L", "Unk.", "Extra calls", r"Win rate, ties excluded [95\% CI]", r"Win rate, ties $\tfrac{1}{2}$", r"Sign test $p$"]
-    (out / "table_dpo_results.tex").write_text(latex_tabular(header, rows, spec, size=r"\footnotesize", tabcolsep="3pt"))
+    (out / "table_dpo_results.tex").write_text(latex_tabular(header, rows, spec, size=r"\tablefont", tabcolsep="3pt"))
 
 
 def tex_lora_results(root, out, ctx):
@@ -417,7 +416,7 @@ def tex_lora_results(root, out, ctx):
     centered = r">{\centering\arraybackslash}"
     spec = r">{\raggedright\arraybackslash}X" + "".join(centered + f"p{{{w}}}" for w in ("0.7cm", "0.7cm", "0.7cm", "0.7cm", "3.0cm", "1.4cm", "1.2cm"))
     header = ["Judged target", "n", "W", "T", "L", r"Win rate, ties excluded [95\% CI]", r"Win rate, ties $\tfrac{1}{2}$", r"Sign test $p$"]
-    (out / "table_lora_results.tex").write_text(latex_tabular(header, rows, spec, size=r"\footnotesize", tabcolsep="3pt"))
+    (out / "table_lora_results.tex").write_text(latex_tabular(header, rows, spec, size=r"\tablefont", tabcolsep="3pt"))
 
 
 def peak_memory(root, run, key):
@@ -430,7 +429,7 @@ def step0_reward(root, run):
 
 def tex_lora_sweep(out, base, runs):
     loss = lambda r: "DPO + NLL" if r["rpo_alpha"] > 0 else (rf"DPO, $\beta={r['beta']:g}$" if abs(r["beta"] - 0.1) > 1e-9 else "DPO")
-    verdict = {"ok": "pass", "degenerate": "fail", "-": "-"}
+    verdict = {"ok": "pass", "degenerate": "fail", "degenerate (required only)": "fail on the 40 alone", "-": "-"}
     rows = [[r"\multicolumn{5}{@{}l}{Base model, no adapter}", base["eos40"], str(base["loops40"]), base["eos22"], str(base["loops22"]), "-", "-"]]
     for r in runs:
         state = r["state"].replace(" (selected)", "")
@@ -442,23 +441,18 @@ def tex_lora_sweep(out, base, runs):
     centered = r">{\centering\arraybackslash}"
     spec = "".join(centered + f"p{{{w}}}" for w in ("0.8cm", "1.4cm", "1.0cm", "1.9cm", "1.2cm", "1.2cm", "1.2cm", "1.2cm", "1.2cm", "1.7cm")) + r">{\raggedright\arraybackslash}X"
     header = ["Rank", "Learning rate", "Epochs", "Loss", "Val. margin", "EOS of 40", "Loops of 40", "EOS of 22", "Loops of 22", "Style W/T/L", "Filter"]
-    (out / "table_lora_sweep.tex").write_text(latex_tabular(header, rows, spec, size=r"\footnotesize", tabcolsep="3pt"))
+    (out / "table_lora_sweep.tex").write_text(latex_tabular(header, rows, spec, size=r"\tablefont", tabcolsep="3pt"))
 
 
 def tex_deviations(root, out, runs):
     try:
         sft = js(root / "results/sft/config.json")
-        manifest = js(root / "results/sft/sft_data_manifest.json")["train"]
         lo = js(root / "results/lora/final_config.json")
-        sft_peak = peak_memory(root, "sft", "peak_mem_gb")
-        ref_peaks = [peak_memory(root, n, "peak_mem_ref_gb") for n in ("dpo_hh", "dpo_uf")]
-        zero = {n: step0_reward(root, f"dpo_{n}") for n in ("hh", "uf")}
     except FileNotFoundError as e:
         print("skip tex_deviations:", e)
         return
     by = {r["run"]: r for r in runs}
     plain, nll, e10, r8 = by["r16_lr5e-5"], by["r16_lr5e-5_rpo1"], by["r16_lr5e-5_e10"], by["r8_lr5e-5"]
-    lr = {name: by[name] for name in ("r16_lr1e-5", "r16_lr7e-5", "r16_lr1e-4", "r16_lr2e-4")}
     micro = math.ceil(lo["n_train"] / lo["per_device_batch_size"])
     updates = math.ceil(micro / lo["grad_accum"])
     doubled = math.ceil(micro / (2 * lo["grad_accum"]))
@@ -466,36 +460,40 @@ def tex_deviations(root, out, runs):
     rows = [
         band("Resource-driven"),
         ["SFT validation batch", "not specified", f"{sft['eval_batch_size']}, down from 8",
-         f"Validation ran out of memory on the T4 while training peaked at {sft_peak:.1f} GB, so I halved the batch and set the "
-         "expandable-segments allocator. Validation loss is an exact token mean, so no value changes."],
+         "Validation ran out of memory on the T4. The loss is an exact token mean, so no value changes."],
         band("Data and implementation choices"),
-        ["Long SFT examples", "truncate to the maximum length",
-         f"skip rows over {sft['max_length']} tokens ({manifest['skipped_too_long']:,} of {manifest['seen']:,} seen) until {sft['n_train']:,} fit",
-         "Truncation would cut the EOS label, so the model would never learn to stop. I did not test truncation."],
+        ["Long SFT examples", "truncate to the maximum length", f"skip rows over {sft['max_length']} tokens until {sft['n_train']:,} fit",
+         "Truncation would cut the EOS label, so the model would never learn to stop. I did not test it."],
         ["DPO reference precision", "fp16 allowed", "fp32 weights under fp16 autocast",
-         f"The reference needed only {min(ref_peaks):.1f}--{max(ref_peaks):.1f} GB on its own T4, so I could afford fp32. Policy and reference "
-         f"then start identical: the largest absolute implicit reward at step 0 was {sci(zero['hh'], 1)} (HH-RLHF) and {sci(zero['uf'], 1)} (UltraFeedback)."],
+         "Memory allowed fp32, so policy and reference start identical."],
         band("Performance-driven (LoRA persona task, where the guide leaves these settings to me)"),
         ["Loss", "plain DPO", "DPO plus NLL on the chosen answer, weight 1",
-         f"Plain DPO at {sci(5e-5)} left no persona on the required prompts (style {plain['wtl40']}). Adding NLL gave small, mixed changes: held-out EOS "
-         f"{plain['eos22']} to {nll['eos22']} and required EOS {plain['eos40']} to {nll['eos40']}."],
+         f"Plain DPO left no persona (style {plain['wtl40']}). NLL gave small, mixed changes."],
         ["Learning rate", "my choice", sci(lo["lr"]),
-         rf"Swept {sci(1e-5)} to {sci(2e-4)} (Table~\ref{{tab:lorasweep}}). The margin barely moved at {sci(1e-5)} ({lr['r16_lr1e-5']['margin']:.2f}), "
-         f"and required-prompt EOS fell from {plain['eos40']} at {sci(5e-5)} to {lr['r16_lr7e-5']['eos40']} at {sci(7e-5)}, "
-         f"{lr['r16_lr1e-4']['eos40']} at {sci(1e-4)}, and {lr['r16_lr2e-4']['eos40']} at {sci(2e-4)}."],
+         rf"The margin barely moved at {sci(1e-5)}, and EOS collapsed from {sci(7e-5)} up (Table~\ref{{tab:lorasweep}})."],
         ["Epochs", "my choice", f"{lo['epochs']:g}",
-         f"Ten epochs at {sci(5e-5)} gave the strongest plain-DPO style ({e10['wtl40']}), but EOS fell to {e10['eos40']} on the required prompts and the filter rejected it."],
+         f"Ten epochs raised style but cut EOS to {e10['eos40']}, and the filter rejected it."],
         ["Rank", "my choice", f"{lo['lora_r']} (alpha {lo['lora_alpha']})",
-         f"At {sci(5e-5)}, rank 8 reached about half the validation margin of rank {lo['lora_r']} ({r8['margin']:.2f} against {plain['margin']:.2f}); "
-         "both reached accuracy 1.0. I did not try rank 8 at a higher rate."],
+         f"Rank 8 reached half the margin at {sci(5e-5)} ({r8['margin']:.2f} against {plain['margin']:.2f}). I did not try it at a higher rate."],
         ["Targets and batch", "my choice",
          rf"all seven linear projections; {lo['per_device_batch_size']} $\times$ {lo['grad_accum']} = {lo['effective_batch_size']}",
-         f"I did not ablate either. All linear layers give the adapter capacity in attention and MLP, and a batch of {lo['effective_batch_size']} gives "
-         f"{updates} updates per epoch on {lo['n_train']} pairs, ({2 * lo['effective_batch_size']} would give {doubled})."],
+         f"Not ablated. A batch of {lo['effective_batch_size']} gives {updates} updates per epoch, and {2 * lo['effective_batch_size']} would give {doubled}."],
     ]
     left = r">{\raggedright\arraybackslash}"
     spec = left + "p{2.3cm}" + left + "p{2.5cm}" + left + "p{3.1cm}" + left + "X"
-    (out / "table_deviations.tex").write_text(latex_tabular(["Setting", "Guide", "Mine", "Reason and effect"], rows, spec, size=r"\footnotesize", tabcolsep="3pt"))
+    (out / "table_deviations.tex").write_text(latex_tabular(["Setting", "Guide", "Mine", "Reason and effect"], rows, spec, size=r"\tablefont", tabcolsep="3pt"))
+
+
+def plot_rewards(ax, name, path, legend_size=8, legend=True, colors=(None, None)):
+    e = [r for r in jl(path) if r["type"] == "eval"]
+    steps = [r["step"] for r in e]
+    ax.plot(steps, [r["val_chosen_reward"] for r in e], "o-", color=colors[0], label="chosen")
+    ax.plot(steps, [r["val_rejected_reward"] for r in e], "s-", color=colors[1], label="rejected")
+    ax.plot(steps, [r["val_reward_margin"] for r in e], "^--", color="black", label="margin (chosen - rejected)")
+    ax.axhline(0, color="grey", lw=0.8)
+    ax.set(title=f"{name.upper()}-DPO: validation implicit rewards", xlabel="optimizer step")
+    if legend:
+        ax.legend(fontsize=legend_size)
 
 
 def fig_dpo_rewards(root, out):
@@ -505,14 +503,7 @@ def fig_dpo_rewards(root, out):
         return
     fig, ax = plt.subplots(1, 2, figsize=(10, 3.8), sharey=True)
     for a, (name, path) in zip(ax, paths.items()):
-        e = [r for r in jl(path) if r["type"] == "eval"]
-        steps = [r["step"] for r in e]
-        a.plot(steps, [r["val_chosen_reward"] for r in e], "o-", label="chosen")
-        a.plot(steps, [r["val_rejected_reward"] for r in e], "s-", label="rejected")
-        a.plot(steps, [r["val_reward_margin"] for r in e], "^--", color="black", label="margin (chosen - rejected)")
-        a.axhline(0, color="grey", lw=0.8)
-        a.set(title=f"{name.upper()}-DPO: validation implicit rewards", xlabel="optimizer step")
-        a.legend(fontsize=8)
+        plot_rewards(a, name, path)
     ax[0].set_ylabel("implicit reward (validation mean)")
     fig.text(0.5, 0.005, "implicit reward = beta * (log pi_policy - log pi_reference), mean over the 1,000 validation pairs", ha="center", fontsize=7.5, color="dimgray")
     fig.tight_layout(rect=(0, 0.03, 1, 1))
@@ -698,7 +689,7 @@ def tex_hh_categories(root, out):
     centered = r">{\centering\arraybackslash}"
     spec = r">{\raggedright\arraybackslash}X" + "".join(centered + f"p{{{w}}}" for w in ("0.7cm", "1.5cm", "2.6cm", "1.5cm", "2.6cm", "2.5cm"))
     header = ["HH-eval category", "n", "DPO-HH W/T/L", r"DPO-HH win rate [95\% CI]", "DPO-UF W/T/L", r"DPO-UF win rate [95\% CI]", "Refusal phrases SFT / HH / UF"]
-    (out / "table_hh_categories.tex").write_text(latex_tabular(header, rows, spec, size=r"\footnotesize", tabcolsep="3pt"))
+    (out / "table_hh_categories.tex").write_text(latex_tabular(header, rows, spec, size=r"\tablefont", tabcolsep="3pt"))
 
 
 def norm_text(text):
@@ -748,7 +739,7 @@ def outcome_word(outcome, who):
     return {"test_win": who, "ref_win": "SFT", "tie": "tie"}[outcome]
 
 
-def prompt_text(record, words=12):
+def prompt_text(record, words=9):
     parts = norm_text(record["instruction"]).split()
     text = " ".join(parts[:words]) + (" ..." if len(parts) > words else "")
     if text.count('"') % 2:
@@ -788,9 +779,9 @@ def tex_examples(root, out, ctx):
     if not rows:
         return
     left = r">{\raggedright\arraybackslash}"
-    spec = left + "p{3.7cm}" + left + "X" + left + "X" + left + "p{3.7cm}"
+    spec = left + "p{3.0cm}" + left + "X" + left + "X" + left + "p{4.8cm}"
     header = ["Example and prompt", "SFT or base model", "DPO model or LoRA adapter", "Judge and reading"]
-    (out / "table_examples.tex").write_text(latex_tabular(header, rows, spec, size=r"\footnotesize", tabcolsep="3pt"))
+    (out / "table_examples.tex").write_text(latex_tabular(header, rows, spec, size=r"\tablefont", tabcolsep="3pt"))
 
 
 def table_alpaca_sources(root, out):
@@ -823,29 +814,65 @@ def table_refusals(root, out):
     (out / "table_hh_refusals.md").write_text(text)
 
 
+LENGTH_PANELS = [("AlpacaEval-300", [("base", "baseline_qwen2.5-0.5b-base_alpaca300.json"), ("SFT", "sft_qwen2.5-0.5b_alpaca300.json"),
+                                      ("DPO-HH", "dpo_hh_qwen2.5-0.5b_alpaca300.json"), ("DPO-UF", "dpo_uf_qwen2.5-0.5b_alpaca300.json")]),
+                 ("HH-eval-300", [("SFT", "sft_qwen2.5-0.5b_hh300.json"), ("DPO-HH", "dpo_hh_qwen2.5-0.5b_hh300.json"),
+                                  ("DPO-UF", "dpo_uf_qwen2.5-0.5b_hh300.json")])]
+
+
+def plot_lengths(ax, title, items, g, legend_size=8, cap_size=7, label_cap=True, legend=True, means=True):
+    for name, f in items:
+        toks = sorted(r["num_new_tokens"] for r in js(g / f))
+        ax.step(toks, [(i + 1) / len(toks) for i in range(len(toks))], where="post", color=COLORS[name],
+                label=f"{name} (mean {statistics.mean(toks):.0f})" if means else name)
+    ax.axvline(512, color="grey", ls="--", lw=1)
+    if label_cap:
+        ax.text(506, 0.55, "512-token cap", fontsize=cap_size, color="grey", ha="right", va="center", rotation=90)
+    ax.set(title=title, xlabel="generated tokens", xlim=(0, 540))
+    if legend:
+        ax.legend(fontsize=legend_size, loc="lower right")
+
+
 def fig_lengths(root, out):
     g = root / "results/generations"
-    panels = [("AlpacaEval-300", [("base", "baseline_qwen2.5-0.5b-base_alpaca300.json"), ("SFT", "sft_qwen2.5-0.5b_alpaca300.json"),
-                                   ("DPO-HH", "dpo_hh_qwen2.5-0.5b_alpaca300.json"), ("DPO-UF", "dpo_uf_qwen2.5-0.5b_alpaca300.json")]),
-              ("HH-eval-300", [("SFT", "sft_qwen2.5-0.5b_hh300.json"), ("DPO-HH", "dpo_hh_qwen2.5-0.5b_hh300.json"),
-                               ("DPO-UF", "dpo_uf_qwen2.5-0.5b_hh300.json")])]
-    if not all((g / f).exists() for _, items in panels for _, f in items):
+    if not all((g / f).exists() for _, items in LENGTH_PANELS for _, f in items):
         print("skip fig_lengths: generations missing")
         return
     fig, ax = plt.subplots(1, 2, figsize=(10, 3.8), sharey=True)
-    for a, (title, items) in zip(ax, panels):
-        for name, f in items:
-            toks = sorted(r["num_new_tokens"] for r in js(g / f))
-            a.step(toks, [(i + 1) / len(toks) for i in range(len(toks))], where="post", color=COLORS[name],
-                   label=f"{name} (mean {statistics.mean(toks):.0f})")
-        a.axvline(512, color="grey", ls="--", lw=1)
-        a.text(506, 0.55, "512-token cap", fontsize=7, color="grey", ha="right", va="center", rotation=90)
-        a.set(title=title, xlabel="generated tokens", xlim=(0, 540))
-        a.legend(fontsize=8, loc="lower right")
+    for a, (title, items) in zip(ax, LENGTH_PANELS):
+        plot_lengths(a, title, items, g)
     ax[0].set_ylabel("share of answers up to this length")
     fig.tight_layout()
     fig.savefig(out / "fig_lengths.png", dpi=170)
     plt.close(fig)
+
+
+def fig_behavior(root, out):
+    g = root / "results/generations"
+    paths = {n: root / f"results/dpo_{n}/metrics.jsonl" for n in ("hh", "uf")}
+    if not (all((g / f).exists() for _, items in LENGTH_PANELS for _, f in items) and all(p.exists() for p in paths.values())):
+        print("skip fig_behavior: generations or DPO metrics missing")
+        return
+    rc = {"font.size": 7, "axes.titlesize": 7.5, "axes.labelsize": 7, "xtick.labelsize": 6.5, "ytick.labelsize": 6.5, "axes.linewidth": 0.6,
+          "lines.linewidth": 1.1, "lines.markersize": 3}
+    with plt.rc_context(rc):
+        fig, ax = plt.subplots(2, 2, figsize=(7.0, 3.3))
+        for a, (title, items), tag in zip(ax[0], LENGTH_PANELS, "ab"):
+            plot_lengths(a, f"({tag}) answer length, {title}", items, g, label_cap=False, legend=False, means=False)
+            a.grid(alpha=0.2, lw=0.5)
+        ax[0, 0].set_ylabel("share of answers")
+        for a, (name, path), tag in zip(ax[1], paths.items(), "cd"):
+            plot_rewards(a, name, path, legend=False, colors=("#6a3d9a", "#e31a1c"))
+            a.set_title(f"({tag}) {name.upper()}-DPO: validation reward scores")
+            a.grid(alpha=0.2, lw=0.5)
+        ax[1, 0].set_ylabel("score (validation mean)")
+        handles, labels = ax[1, 0].get_legend_handles_labels()
+        fig.legend(handles, labels, loc="lower center", ncol=3, fontsize=6.5, frameon=False)
+        handles, labels = ax[0, 0].get_legend_handles_labels()
+        fig.legend(handles, labels, loc="upper center", ncol=4, fontsize=6.5, frameon=False)
+        fig.tight_layout(rect=(0, 0.05, 1, 0.94), h_pad=0.8, w_pad=1.0)
+        fig.savefig(out / "fig_behavior.png", dpi=300)
+        plt.close(fig)
 
 
 def penalty_text(root, stem):
@@ -972,6 +999,7 @@ def build_persona_examples(root, out, ctx):
 INDEX = [
     ("fig_training.png", "14.4", "SFT and DPO training curves, checkpoints marked, smoothing stated"),
     ("fig_dpo_rewards.png", "14.4 / 14.6", "implicit chosen/rejected rewards on validation: both fall, the margin grows"),
+    ("fig_behavior.png", "14.6", "compact 2x2 used in the report: answer-length distributions and validation reward scores"),
     ("fig_lora_training.png", "14.4 / 14.3", "why plain DPO barely raises the persona likelihood and the NLL term does"),
     ("table_data.md", "14.1", "datasets, splits, filtering, token statistics"),
     ("table_eval_sets.md", "14.1", "the four fixed evaluation sets"),
@@ -1015,6 +1043,7 @@ def build_all(root, out, ctx, labelled):
     tex_lora_results(root, out, ctx)
     table_deviations(root, out)
     fig_dpo_rewards(root, out)
+    fig_behavior(root, out)
     fig_lora_training(root, out, ctx)
     table_judge_reliability(root, out, labelled)
     table_judge_consistency(root, out)

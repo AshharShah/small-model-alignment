@@ -1,19 +1,19 @@
-\begingroup\footnotesize\setlength{\tabcolsep}{3pt}\renewcommand{\arraystretch}{1.12}
+\begingroup\tablefont\setlength{\tabcolsep}{3pt}\renewcommand{\arraystretch}{1.0}
 \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{2.3cm}>{\raggedright\arraybackslash}p{2.5cm}>{\raggedright\arraybackslash}p{3.1cm}>{\raggedright\arraybackslash}X}
 \toprule
 Setting & Guide & Mine & Reason and effect \\
 \midrule
 \rowcolor{accent!8}\multicolumn{4}{@{}l}{\textbf{Resource-driven}} \\
-SFT validation batch & not specified & 4, down from 8 & Validation ran out of memory on the T4 while training peaked at 12.8 GB, so I halved the batch and set the expandable-segments allocator. Validation loss is an exact token mean, so no value changes. \\
+SFT validation batch & not specified & 4, down from 8 & Validation ran out of memory on the T4. The loss is an exact token mean, so no value changes. \\
 \rowcolor{accent!8}\multicolumn{4}{@{}l}{\textbf{Data and implementation choices}} \\
-Long SFT examples & truncate to the maximum length & skip rows over 512 tokens (21,560 of 51,565 seen) until 30,000 fit & Truncation would cut the EOS label, so the model would never learn to stop. I did not test truncation. \\
-DPO reference precision & fp16 allowed & fp32 weights under fp16 autocast & The reference needed only 3.4--4.2 GB on its own T4, so I could afford fp32. Policy and reference then start identical: the largest absolute implicit reward at step 0 was $2.4\times10^{-5}$ (HH-RLHF) and $4.3\times10^{-5}$ (UltraFeedback). \\
+Long SFT examples & truncate to the maximum length & skip rows over 512 tokens until 30,000 fit & Truncation would cut the EOS label, so the model would never learn to stop. I did not test it. \\
+DPO reference precision & fp16 allowed & fp32 weights under fp16 autocast & Memory allowed fp32, so policy and reference start identical. \\
 \rowcolor{accent!8}\multicolumn{4}{@{}l}{\textbf{Performance-driven (LoRA persona task, where the guide leaves these settings to me)}} \\
-Loss & plain DPO & DPO plus NLL on the chosen answer, weight 1 & Plain DPO at $5\times10^{-5}$ left no persona on the required prompts (style 0/40/0). Adding NLL gave small, mixed changes: held-out EOS 19/22 to 20/22 and required EOS 40/40 to 35/40. \\
-Learning rate & my choice & $5\times10^{-5}$ & Swept $1\times10^{-5}$ to $2\times10^{-4}$ (Table~\ref{tab:lorasweep}). The margin barely moved at $1\times10^{-5}$ (0.12), and required-prompt EOS fell from 40/40 at $5\times10^{-5}$ to 31/40 at $7\times10^{-5}$, 30/40 at $1\times10^{-4}$, and 2/40 at $2\times10^{-4}$. \\
-Epochs & my choice & 3 & Ten epochs at $5\times10^{-5}$ gave the strongest plain-DPO style (9/31/0), but EOS fell to 11/40 on the required prompts and the filter rejected it. \\
-Rank & my choice & 16 (alpha 32) & At $5\times10^{-5}$, rank 8 reached about half the validation margin of rank 16 (0.52 against 1.02); both reached accuracy 1.0. I did not try rank 8 at a higher rate. \\
-Targets and batch & my choice & all seven linear projections; 4 $\times$ 4 = 16 & I did not ablate either. All linear layers give the adapter capacity in attention and MLP, and a batch of 16 gives 13 updates per epoch on 198 pairs, (32 would give 7). \\
+Loss & plain DPO & DPO plus NLL on the chosen answer, weight 1 & Plain DPO left no persona (style 0/40/0). NLL gave small, mixed changes. \\
+Learning rate & my choice & $5\times10^{-5}$ & The margin barely moved at $1\times10^{-5}$, and EOS collapsed from $7\times10^{-5}$ up (Table~\ref{tab:lorasweep}). \\
+Epochs & my choice & 3 & Ten epochs raised style but cut EOS to 11/40, and the filter rejected it. \\
+Rank & my choice & 16 (alpha 32) & Rank 8 reached half the margin at $5\times10^{-5}$ (0.52 against 1.02). I did not try it at a higher rate. \\
+Targets and batch & my choice & all seven linear projections; 4 $\times$ 4 = 16 & Not ablated. A batch of 16 gives 13 updates per epoch, and 32 would give 7. \\
 \bottomrule
 \end{tabularx}
 \endgroup

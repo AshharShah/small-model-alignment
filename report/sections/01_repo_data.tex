@@ -1,11 +1,11 @@
 \section{Repository, Models, and Data}
 \label{sec:data}
 
-The GitHub repository \url{https://github.com/AshharShah/small-model-alignment} holds all my code, configurations, metrics, generated responses, pairwise comparison files, and judged outputs. The limitations and reproducibility section lists the key paths.
+The GitHub repository \url{https://github.com/AshharShah/small-model-alignment} holds all the code, configurations, metrics, generated responses, pairwise comparison files, and judged outputs. Section~\ref{sec:limits} lists the key paths and files, and the README explains how to reproduce the experiments.
 
-\paragraph{Models.} The base checkpoint is Qwen/Qwen2.5-0.5B~\citep{qwen2025}. I fine-tuned it for SFT, then trained both DPO models from the best SFT checkpoint, which also serves as the frozen reference model in the DPO loss~\citep{rafailov2023dpo}. For the LoRA persona task, the assignment requires a different model, so I used the instruction-tuned HuggingFaceTB/\allowbreak SmolLM2-360M-Instruct~\citep{allal2025smollm2}.
+\paragraph{Models.} The base checkpoint is Qwen/Qwen2.5-0.5B~\citep{qwen2025}. Following the manual, I fine-tuned it for SFT and then trained both DPO models from the best SFT checkpoint, which also serves as the frozen reference model in the DPO loss~\citep{rafailov2023dpo}. The LoRA persona task uses a different model: the manual prescribes the instruction-tuned HuggingFaceTB/\allowbreak SmolLM2-360M-Instruct~\citep{allal2025smollm2}, so I used that.
 
-\paragraph{Training and evaluation data.} Each training track has its own data (Table~\ref{tab:data}). SFT uses 30,000 training and 1,000 validation examples, each DPO run uses 15,000 training and 1,000 validation preference pairs, and the LoRA task uses 198 training and 22 validation pairs. Table~\ref{tab:evalsets} lists the four fixed evaluation sets: the course provides the HH set, and I built the other three. Within each comparison, I kept the evaluation prompts and their order fixed, so every model saw exactly the same inputs.
+\paragraph{Training and evaluation data.} Each training track has its own data (Table~\ref{tab:data}). For SFT I used 30,000 training and 1,000 validation examples, each DPO run used 15,000 training and 1,000 validation preference pairs, and the LoRA task used 198 training and 22 validation pairs. Table~\ref{tab:evalsets} lists the four fixed evaluation sets. The repository provides the HH set, so I used it as it is, and I built the other three. Within each comparison, I kept the evaluation prompts and their order fixed, so every model saw exactly the same inputs.
 
 \begin{table}[H]
 \centering
@@ -22,8 +22,8 @@ The GitHub repository \url{https://github.com/AshharShah/small-model-alignment} 
 \input{assets/table_eval_sets}
 \end{table}
 
-\paragraph{Seeds, filtering and prompt format.} I used seed 42 everywhere to keep the experiments reproducible: for dataset shuffling and subset selection (including the AlpacaEval subset and the persona train/validation split), for every training run, and for the A/B order in the pairwise comparison files.
+\paragraph{Seeds, filtering and prompt format.} I used seed 42 everywhere so the experiments are reproducible. It fixes dataset shuffling and subset selection (including the AlpacaEval subset and the persona train/validation split), every training run, and the A/B order in the pairwise comparison files.
 
-All Qwen runs share one prompt format, \texttt{\#\#\# Instruction:}\ $\langle$instruction$\rangle$\ \texttt{\#\#\# Response:}, with each marker on its own line and no chat template. This format covers SFT, both DPO runs, and every generation. SmolLM2 uses its own chat template for both training and generation.
+The manual leaves the prompt format up to us, so every Qwen run uses one Alpaca-style template and no chat template, with each marker on its own line: \mbox{\texttt{\#\#\# Instruction:}}\ $\langle$instruction$\rangle$\ \mbox{\texttt{\#\#\# Response:}}. It covers SFT, both DPO runs, and every generation. SmolLM2 uses its own chat template for both training and generation.
 
-I appended an EOS token to every training response and kept only the examples whose prompt, response, and EOS fit within 512 tokens. As a result, no example needed truncation and every response keeps its EOS label. I also kept only single-turn data: the first exchange of each UltraChat conversation, single-turn pairs from HH-RLHF and UltraFeedback, and DPO prompts of at most 256 tokens.
+I appended an EOS token to every training response and kept only the examples whose prompt, response, and EOS fit within 512 tokens, so no example needed truncation and every response kept its EOS label. I also kept only single-turn data (the first exchange of each UltraChat conversation, and single-turn pairs from HH-RLHF and UltraFeedback) and limited DPO prompts to 256 tokens.

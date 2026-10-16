@@ -1,38 +1,15 @@
-\ifcoverpage
-\begin{titlepage}
-\thispagestyle{empty}
-\centering
-\vspace*{0.14\textheight}
-{\color{accent}\rule{\textwidth}{1.4pt}}\par
-\vspace{1.4em}
-{\sffamily\large\color{muted}\reportcourse}\par
-\vspace{2.6em}
-{\sffamily\bfseries\fontsize{30}{34}\selectfont\color{accent}\reportassignment}\par
-\vspace{1.4em}
-{\itshape\Large\reporttitle}\par
-\vspace{1.4em}
-{\color{accent}\rule{0.35\textwidth}{0.6pt}}\par
-\vspace{0.9em}
-{\sffamily\small\color{muted}Final Report}\par
-\vfill
-{\renewcommand{\arraystretch}{1.55}
-\begin{tabular}{@{}r@{\hspace{1.4em}}l@{}}
-{\sffamily\small\color{muted}Instructor} & \large\reportinstructor\\
-{\sffamily\small\color{muted}Student} & \large\reportauthor\\
-{\sffamily\small\color{muted}Roll number} & \large\reportroll\\
-{\sffamily\small\color{muted}Program} & \large\reportprogram
-\end{tabular}}\par
-\vspace*{0.08\textheight}
-{\color{accent}\rule{\textwidth}{0.6pt}}\par
-\end{titlepage}
-\else
 \thispagestyle{firstpage}
-\begin{center}
-{\color{accent}\rule{\textwidth}{1.2pt}}\\[0.9em]
-{\sffamily\small\color{muted}\reportcourse\ \textperiodcentered\ \reportassignment}\\[0.5em]
-{\sffamily\bfseries\LARGE\color{accent}\reporttitle}\\[0.7em]
-{\large\reportauthor\ \textperiodcentered\ Roll no.\ \reportroll\ \textperiodcentered\ \reportprogram}\\[0.2em]
-{\small Instructor: \reportinstructor}\\[0.6em]
-{\color{accent}\rule{\textwidth}{0.5pt}}
-\end{center}
-\fi
+\begin{flushleft}
+{\sffamily\bfseries\fontsize{17}{20.5}\selectfont \reportassignment:\\ Instruction Tuning and Direct Preference Optimization\\ on a Small Language Model\par}
+\vspace{0.8em}
+{\sffamily\bfseries\normalsize \reportauthor\par}
+{\sffamily\small \reportprogram, Roll No.\ \reportroll, \reportinstitution\par}
+{\sffamily\small \reportcourse; instructor: \reportinstructor\par}
+\end{flushleft}
+\vspace{0.3em}
+
+\noindent{\sffamily\bfseries\small ABSTRACT}\par\vspace{2pt}
+{\small\noindent This report follows a small post-training pipeline on Qwen2.5-0.5B: supervised fine-tuning (SFT) on 30,000 UltraChat examples, then two Direct Preference Optimization (DPO) runs written from scratch, one on 15,000 HH-RLHF pairs and one on 15,000 UltraFeedback pairs. A third experiment trains a LoRA persona adapter with TRL. I compare each DPO model with its SFT starting point on 300 fixed prompts, using a pairwise language-model judge. The HH-RLHF model beats SFT on its own safety prompts (win rate 0.596, $p=0.004$). The UltraFeedback model loses on AlpacaEval (0.392) because its answers are longer and repeat themselves more, and the loss turns into a tie (0.498) when I discourage repetition. The persona adapter either shows no persona or gains style at the cost of usefulness and safety. One judge, small evaluation sets, and a single training seed limit how far these conclusions reach.\par}
+\vspace{0.4em}
+\noindent{\sffamily\bfseries\small Additional Key Words and Phrases:} {\small preference optimization, DPO, supervised fine-tuning, LoRA, LLM-as-a-judge, small language models\par}
+\vspace{0.2em}

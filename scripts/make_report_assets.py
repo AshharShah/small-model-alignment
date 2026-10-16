@@ -21,6 +21,9 @@ def short(run):
     return run.replace("r16_", "")
 
 
+LEGACY_STYLE_FILES = {"r16_lr1e-4": "control_lr1e-4_vs_base_persona40_style"}
+
+
 def persona_context(root):
     p = root / "results/lora/v2/persona_v2_selection.json"
     if not p.exists():
@@ -70,7 +73,7 @@ def fig_training(root, out, key):
     rc = {"font.size": 7.5, "axes.titlesize": 8.5, "axes.labelsize": 7.5, "xtick.labelsize": 7, "ytick.labelsize": 7,
           "axes.linewidth": 0.6, "lines.linewidth": 1.2, "lines.markersize": 3.5}
     with plt.rc_context(rc):
-        fig, ax = plt.subplots(2, 2, figsize=(7.0, 4.4))
+        fig, ax = plt.subplots(2, 2, figsize=(7.0, 3.9))
         recs = jl(sft)
         tr = [r for r in recs if r["type"] == "train"]
         ev = [r for r in recs if r["type"] == "eval"]
@@ -321,11 +324,15 @@ def table_lora(root, out, key, ctx):
         s40, s22 = stats_of(f"persona_{run}.json"), stats_of(f"persona_heldout_{run}.json")
         wtl22, score22 = verdict(f"persona22_{run}_vs_base_style")
         wtl40, score40 = verdict(f"persona40_{run}_vs_base_style")
+        if score40 is None and run in LEGACY_STYLE_FILES:
+            wtl40, score40 = verdict(LEGACY_STYLE_FILES[run])
         state = "-"
         if s40 and s22:
             state = "degenerate" if degeneration_reasons({"eval40": s40, "heldout22": s22}, base_stats) else "ok"
             if run == ctx["selected"]:
                 state += " (selected)"
+        elif s40 and degeneration_reasons({"eval40": s40, "heldout22": base_stats["heldout22"]}, base_stats):
+            state = "degenerate (required only)"
         rows.append([run, r["rpo_alpha"], r["epochs"], r["lr"], r["optimizer_steps"], r["val_margin"],
                      eos(s22), loops(s22), wtl22, eos(s40), loops(s40), wtl40, state])
         summary[run] = {"heldout22": {"stats": s22, "style_wtl": wtl22}, "eval40": {"stats": s40, "style_wtl": wtl40}, "filter": state}

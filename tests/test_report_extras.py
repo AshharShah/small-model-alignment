@@ -163,8 +163,8 @@ def test_config_table_reports_the_submitted_values_for_all_four_runs(tmp_path):
     rx.tex_config(ROOT, tmp_path)
     text = (tmp_path / "table_config.tex").read_text()
     for needle in ("SFT &", "HH-RLHF DPO &", "UltraFeedback DPO &", "LoRA-DPO (TRL) &", "937 steps", "468 steps", "step~400", "step~468",
-                   r"$2\times10^{-5}$", r"$1\times10^{-6}$", r"$5\times10^{-5}$", "8,683,520 of 370,504,640", "repetition penalty 1.0",
-                   "SmolLM2 chat template", "n/a", r"rpo}_\alpha=1"):
+                   r"$2\times10^{-5}$", r"$1\times10^{-6}$", r"$5\times10^{-5}$", "repetition penalty 1.0",
+                   "SmolLM2 chat template", "n/a", "NLL on the chosen answer"):
         assert needle in text, needle
     assert text.count(r"\\") == 5
 
@@ -200,16 +200,11 @@ def test_deviation_table_separates_resource_data_and_performance_changes(tmp_pat
     runs = [sweep_run("r16_lr5e-5", margin=1.0169, eos22="19/22", wtl40="0/40/0"),
             sweep_run("r16_lr5e-5_rpo1", rpo_alpha=1.0, eos22="20/22", eos40="35/40"),
             sweep_run("r16_lr5e-5_e10", epochs=10.0, eos40="11/40", wtl40="9/31/0"),
-            sweep_run("r8_lr5e-5", rank=8, margin=0.5165),
-            sweep_run("r16_lr1e-5", lr=1e-5, margin=0.124),
-            sweep_run("r16_lr7e-5", lr=7e-5, eos40="31/40"),
-            sweep_run("r16_lr1e-4", lr=1e-4, eos40="30/40"),
-            sweep_run("r16_lr2e-4", lr=2e-4, eos40="2/40")]
+            sweep_run("r8_lr5e-5", rank=8, margin=0.5165)]
     rx.tex_deviations(ROOT, tmp_path, runs)
     text = (tmp_path / "table_deviations.tex").read_text()
-    for needle in ("Resource-driven", "Data and implementation choices", "Performance-driven", "12.8 GB", "21,560 of 51,565 seen", "3.4--4.2 GB",
-                   r"$2.4\times10^{-5}$", r"$4.3\times10^{-5}$", "13 updates per epoch", "(32 would give 7)", "4, down from 8",
-                   "31/40 at", "2/40 at", "0.52 against 1.02", r"Table~\ref{tab:lorasweep}"):
+    for needle in ("Resource-driven", "Data and implementation choices", "Performance-driven", "4, down from 8", "skip rows over 512 tokens until 30,000 fit",
+                   "style 0/40/0", "cut EOS to 11/40", "0.52 against 1.02", "gives 13 updates per epoch, and 32 would give 7", r"Table~\ref{tab:lorasweep}"):
         assert needle in text, needle
     assert text.count(r"\rowcolor") == 3 and text.count(r"\\") == 12
 

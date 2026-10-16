@@ -352,7 +352,7 @@
           },
           "style_wtl": "-"
         },
-        "filter": "-"
+        "filter": "degenerate (required only)"
       },
       "r16_lr1e-4_b0.3": {
         "heldout22": {
@@ -370,7 +370,7 @@
           },
           "style_wtl": "-"
         },
-        "filter": "-"
+        "filter": "degenerate (required only)"
       },
       "r16_lr1e-4": {
         "heldout22": {
@@ -386,9 +386,9 @@
             "hit_eos": 30,
             "repeated_phrase_outputs": 24
           },
-          "style_wtl": "-"
+          "style_wtl": "2/38/0"
         },
-        "filter": "-"
+        "filter": "degenerate (required only)"
       },
       "r16_lr2e-4": {
         "heldout22": {
@@ -406,7 +406,7 @@
           },
           "style_wtl": "-"
         },
-        "filter": "-"
+        "filter": "degenerate (required only)"
       },
       "r16_lr5e-5_e10": {
         "heldout22": {
